@@ -1,0 +1,81 @@
+﻿@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+<!--
+Simulasi APBN
+
+Program ini ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+untuk Kementerian Keuangan Republik Indonesia.
+-->
+<!DOCTYPE html>
+<html lang="id" xml:lang="id" xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="author" content="Kementerian Keuangan Republik Indonesia, Danang Galuh Tegar Prasetyo (https://danang.id/)">
+    <meta name="description" content="Simulasi APBN">
+
+    <title>Simulasi APBN@(ViewBag.Title is not null ? ": " + ViewBag.Title : "" )</title>
+    <partial name="_PageIconPartial" />
+    
+    <!-- Custom fonts -->
+    <environment include="Development">
+        <link href="~/styles/layout.font.css" rel="stylesheet" type="text/css">
+    </environment>
+    <environment exclude="Development">
+        <link href="~/styles/layout.font.min.css" rel="stylesheet" type="text/css">
+    </environment>
+
+    <!-- Custom styles -->
+    <partial name="_FontAwesomeStylePartial" />
+    <environment include="Development">
+        <link href="~/styles/base.css" rel="stylesheet" type="text/css">
+    </environment>
+    <environment exclude="Development">
+        <link href="~/styles/base.min.css" rel="stylesheet" type="text/css">
+    </environment>
+    <environment include="Development">
+        <link href="~/styles/layout.css" rel="stylesheet" type="text/css">
+    </environment>
+    <environment exclude="Development">
+        <link href="~/styles/layout.min.css" rel="stylesheet" type="text/css">
+    </environment>
+    
+    @await RenderSectionAsync("Styles", required: false)
+
+    <partial name="_GoogleTagManagerScriptPartial" />
+</head>
+<body>
+<partial name="_NoScriptPartial" />
+
+<nav class="navigation">
+    <img class="ministry-logo" src="~/media/ministry-logo-with-title.png" alt="Kementerian Keuangan Republik Indonesia" />
+</nav>
+
+<div class="wrapper">
+    @RenderBody()
+</div>
+
+<partial name="_FigletScriptPartial"/>
+
+<partial name="_BootstrapJQueryScriptPartial" />
+
+<!-- Custom scripts for all pages-->
+<environment include="Development">
+    <script src="~/scripts/layout.js"></script>
+</environment>
+<environment exclude="Development">
+    <script src="~/scripts/layout.min.js"></script>
+</environment>
+
+<!-- Page level custom scripts -->
+@await RenderSectionAsync("Scripts", false)
+</body>
+
+</html>

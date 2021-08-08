@@ -1,0 +1,102 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30413.136
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimulasiAPBN.Web", "SimulasiAPBN.Web\SimulasiAPBN.Web.csproj", "{44D393F0-7E3A-4B95-B2AE-C9BD1CFC873F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3B1DD9B2-0098-4C8C-99CE-7D4278C12B87} = {3B1DD9B2-0098-4C8C-99CE-7D4278C12B87}
+		{BEF6C1FE-3970-449C-A4A1-BB355413140C} = {BEF6C1FE-3970-449C-A4A1-BB355413140C}
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimulasiAPBN.Infrastructure", "SimulasiAPBN.Infrastructure\SimulasiAPBN.Infrastructure.csproj", "{BEF6C1FE-3970-449C-A4A1-BB355413140C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimulasiAPBN.Core", "SimulasiAPBN.Core\SimulasiAPBN.Core.csproj", "{3B1DD9B2-0098-4C8C-99CE-7D4278C12B87}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimulasiAPBN.Common", "SimulasiAPBN.Common\SimulasiAPBN.Common.csproj", "{F9A3108B-21E4-4FED-8580-480D6B73206C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimulasiAPBN.Application", "SimulasiAPBN.Application\SimulasiAPBN.Application.csproj", "{1077AF13-A1D0-47D5-A15E-71E984467117}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{44D393F0-7E3A-4B95-B2AE-C9BD1CFC873F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44D393F0-7E3A-4B95-B2AE-C9BD1CFC873F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44D393F0-7E3A-4B95-B2AE-C9BD1CFC873F}.Debug|x64.ActiveCfg = Debug|x64
+		{44D393F0-7E3A-4B95-B2AE-C9BD1CFC873F}.Debug|x64.Build.0 = Debug|x64
+		{44D393F0-7E3A-4B95-B2AE-C9BD1CFC873F}.Debug|x86.ActiveCfg = Debug|x86
+		{44D393F0-7E3A-4B95-B2AE-C9BD1CFC873F}.Debug|x86.Build.0 = Debug|x86
+		{44D393F0-7E3A-4B95-B2AE-C9BD1CFC873F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44D393F0-7E3A-4B95-B2AE-C9BD1CFC873F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{44D393F0-7E3A-4B95-B2AE-C9BD1CFC873F}.Release|x64.ActiveCfg = Release|x64
+		{44D393F0-7E3A-4B95-B2AE-C9BD1CFC873F}.Release|x64.Build.0 = Release|x64
+		{44D393F0-7E3A-4B95-B2AE-C9BD1CFC873F}.Release|x86.ActiveCfg = Release|x86
+		{44D393F0-7E3A-4B95-B2AE-C9BD1CFC873F}.Release|x86.Build.0 = Release|x86
+		{BEF6C1FE-3970-449C-A4A1-BB355413140C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BEF6C1FE-3970-449C-A4A1-BB355413140C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BEF6C1FE-3970-449C-A4A1-BB355413140C}.Debug|x64.ActiveCfg = Debug|x64
+		{BEF6C1FE-3970-449C-A4A1-BB355413140C}.Debug|x64.Build.0 = Debug|x64
+		{BEF6C1FE-3970-449C-A4A1-BB355413140C}.Debug|x86.ActiveCfg = Debug|x86
+		{BEF6C1FE-3970-449C-A4A1-BB355413140C}.Debug|x86.Build.0 = Debug|x86
+		{BEF6C1FE-3970-449C-A4A1-BB355413140C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BEF6C1FE-3970-449C-A4A1-BB355413140C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BEF6C1FE-3970-449C-A4A1-BB355413140C}.Release|x64.ActiveCfg = Release|x64
+		{BEF6C1FE-3970-449C-A4A1-BB355413140C}.Release|x64.Build.0 = Release|x64
+		{BEF6C1FE-3970-449C-A4A1-BB355413140C}.Release|x86.ActiveCfg = Release|x86
+		{BEF6C1FE-3970-449C-A4A1-BB355413140C}.Release|x86.Build.0 = Release|x86
+		{3B1DD9B2-0098-4C8C-99CE-7D4278C12B87}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3B1DD9B2-0098-4C8C-99CE-7D4278C12B87}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3B1DD9B2-0098-4C8C-99CE-7D4278C12B87}.Debug|x64.ActiveCfg = Debug|x64
+		{3B1DD9B2-0098-4C8C-99CE-7D4278C12B87}.Debug|x64.Build.0 = Debug|x64
+		{3B1DD9B2-0098-4C8C-99CE-7D4278C12B87}.Debug|x86.ActiveCfg = Debug|x86
+		{3B1DD9B2-0098-4C8C-99CE-7D4278C12B87}.Debug|x86.Build.0 = Debug|x86
+		{3B1DD9B2-0098-4C8C-99CE-7D4278C12B87}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3B1DD9B2-0098-4C8C-99CE-7D4278C12B87}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3B1DD9B2-0098-4C8C-99CE-7D4278C12B87}.Release|x64.ActiveCfg = Release|x64
+		{3B1DD9B2-0098-4C8C-99CE-7D4278C12B87}.Release|x64.Build.0 = Release|x64
+		{3B1DD9B2-0098-4C8C-99CE-7D4278C12B87}.Release|x86.ActiveCfg = Release|x86
+		{3B1DD9B2-0098-4C8C-99CE-7D4278C12B87}.Release|x86.Build.0 = Release|x86
+		{F9A3108B-21E4-4FED-8580-480D6B73206C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F9A3108B-21E4-4FED-8580-480D6B73206C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F9A3108B-21E4-4FED-8580-480D6B73206C}.Debug|x64.ActiveCfg = Debug|x64
+		{F9A3108B-21E4-4FED-8580-480D6B73206C}.Debug|x64.Build.0 = Debug|x64
+		{F9A3108B-21E4-4FED-8580-480D6B73206C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F9A3108B-21E4-4FED-8580-480D6B73206C}.Debug|x86.Build.0 = Debug|Any CPU
+		{F9A3108B-21E4-4FED-8580-480D6B73206C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F9A3108B-21E4-4FED-8580-480D6B73206C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F9A3108B-21E4-4FED-8580-480D6B73206C}.Release|x64.ActiveCfg = Release|x64
+		{F9A3108B-21E4-4FED-8580-480D6B73206C}.Release|x64.Build.0 = Release|x64
+		{F9A3108B-21E4-4FED-8580-480D6B73206C}.Release|x86.ActiveCfg = Release|Any CPU
+		{F9A3108B-21E4-4FED-8580-480D6B73206C}.Release|x86.Build.0 = Release|Any CPU
+		{1077AF13-A1D0-47D5-A15E-71E984467117}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1077AF13-A1D0-47D5-A15E-71E984467117}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1077AF13-A1D0-47D5-A15E-71E984467117}.Debug|x64.ActiveCfg = Debug|x64
+		{1077AF13-A1D0-47D5-A15E-71E984467117}.Debug|x64.Build.0 = Debug|x64
+		{1077AF13-A1D0-47D5-A15E-71E984467117}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1077AF13-A1D0-47D5-A15E-71E984467117}.Debug|x86.Build.0 = Debug|Any CPU
+		{1077AF13-A1D0-47D5-A15E-71E984467117}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1077AF13-A1D0-47D5-A15E-71E984467117}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1077AF13-A1D0-47D5-A15E-71E984467117}.Release|x64.ActiveCfg = Release|x64
+		{1077AF13-A1D0-47D5-A15E-71E984467117}.Release|x64.Build.0 = Release|x64
+		{1077AF13-A1D0-47D5-A15E-71E984467117}.Release|x86.ActiveCfg = Release|Any CPU
+		{1077AF13-A1D0-47D5-A15E-71E984467117}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6A6AFA13-2552-441F-8E9C-6AC101831014}
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		Policies = $0
+		$0.StandardHeader = $1
+		$1.Text = @/*\r\n * Simulasi APBN\r\n *\r\n * Program ditulis untuk Kementerian Keuangan Republik Indonesia.\r\n */
+	EndGlobalSection
+EndGlobal

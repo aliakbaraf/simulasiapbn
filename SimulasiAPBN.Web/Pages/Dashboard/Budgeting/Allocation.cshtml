@@ -1,0 +1,403 @@
+@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+@page
+@model Allocation
+
+@{
+    Layout = "_Layout";
+    ViewBag.Title = "Alokasi Anggaran";
+}
+
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Alokasi Anggaran</h1>
+    <button class="btn btn-warning btn-sm" v-on:click="onShowAddAllocationModal">
+        <i class="fas fa-plus fa-fw"></i>&nbsp;
+        Alokasi Baru
+    </button>
+</div>
+
+<partial name="_AlertPartial" />
+
+<!-- Content Row -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Daftar Alokasi</h6>
+            </div>
+            @if (!Model.Allocations.Any())
+            {
+                <div class="card-body">
+                    Belum ada Alokasi Anggaran yang dicatat.<br />
+                    Silakan tambah alokasi baru untuk memulai.
+                </div>
+            }
+            else
+            {
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered"
+                               id="allocationTable">
+                            <thead class="text-center">
+                                <tr>
+                                    <th>Nama</th>
+                                    <th>Sifat</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var allocation in Model.Allocations)
+                                {
+                                    <tr>
+                                        @if (allocation.IsMandatory)
+                                        {
+                                            <td rowspan="2" style="min-width: 15em">
+                                                <strong>@allocation.Name</strong>
+                                            </td>
+                                        }
+                                        else
+                                        {
+                                            <td>
+                                                <strong>@allocation.Name</strong>
+                                            </td>
+                                        }
+                                        <td class="text-center">
+                                            @if (allocation.IsMandatory)
+                                            {
+                                                <span>
+                                                    <strong>Wajib</strong>
+                                                    (minimum {{toLocale(@allocation.MandatoryThreshold)}}% dari APBN)
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span>Tidak diatur</span>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            <button class="btn btn-sm btn-outline-primary"
+                                                    v-on:click="e => onShowModifyAllocationModal(e, '@allocation.Id')">
+                                                Ubah
+                                            </button>
+                                            <button class="btn btn-sm btn-danger"
+                                                    v-on:click="e => onShowRemoveAllocationModal(e, '@allocation.Id')">
+                                                Hapus
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    @if (allocation.IsMandatory)
+                                    {
+                                        <tr>
+                                            <td colspan="2">
+                                                <i>@allocation.MandatoryExplanation</i>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+</div>
+
+@section Styles
+{
+    <partial name="_DataTableStylePartial" />
+}
+
+@section Scripts
+{
+    <partial name="_DataTableScriptPartial" />
+    <script lang="js">
+    var app = {
+        data: {
+            alerts: JSON.parse('@Json.Serialize(Model.Alerts)'),
+            sweetAlert: {
+                text: '@Model.SweetAlert.Text',
+                title: '@Model.SweetAlert.Title',
+                icon: '@Model.SweetAlert.Type',
+                button: "OK"
+            },
+            allocations: JSON.parse('@Json.Serialize(Model.Allocations)'),
+            activeAllocation: {
+                id: "",
+                name: "",
+                is_mandatory: false,
+                mandatory_threshold: 0,
+                mandatory_explanation: ""
+            },
+            postAction: '@Allocation.AddAllocationAction',
+        },
+        methods: {
+            toLocale(value) {
+                return window.toLocale(value);
+            },
+            toCurrency(value) {
+                return window.toCurrency(value);
+            },
+            onAlertClose(index) {
+                this.alerts.splice(index,  1);
+            },
+            showAlert(text, title, type) {
+                this.sweetAlert.text = text;
+                this.sweetAlert.title = title;
+                this.sweetAlert.icon = type;
+                showSweetAlert(this.sweetAlert);
+                this.alerts.push({ text, title, type });
+            },
+            /* Allocation helpers */
+            setActiveAllocation(allocationId) {
+                var emptyAllocation = {
+                    id: "",
+                    name: "",
+                    is_mandatory: false,
+                    mandatory_threshold: 0,
+                    mandatory_explanation: "",
+                };
+                if (!allocationId) {
+                    this.activeAllocation = Object.assign({}, emptyAllocation);
+                    return;
+                }
+                var allocation = this.allocations.find(entity => entity.id === allocationId);
+                if (!allocation) {
+                    this.activeAllocation = Object.assign({}, emptyAllocation);
+                    return;
+                }
+                this.activeAllocation = Object.assign({}, allocation);
+                this.activeAllocation.mandatory_threshold = parseFloat(allocation.mandatory_threshold);
+            },
+            /* Add Allocation handlers */
+            onShowAddAllocationModal(event) {
+                event.preventDefault();
+                this.postAction = '@Allocation.AddAllocationAction';
+                this.setActiveAllocation();
+                $("#upsertAllocationModal").modal("show");
+            },
+            onAddAllocationButtonClicked(event) {
+                event.preventDefault();
+                document.getElementById("upsert-allocation-form").submit();
+            },
+            /* Modify Allocation handlers */
+            onShowModifyAllocationModal(event, allocationId) {
+                event.preventDefault();
+                this.postAction = '@Allocation.ModifyAllocationAction';
+                this.setActiveAllocation(allocationId);
+                $("#upsertAllocationModal").modal("show");
+            },
+            /* Remove Allocation handlers */
+            onShowRemoveAllocationModal(event, allocationId) {
+                event.preventDefault();
+                this.postAction = '@Allocation.RemoveAllocationAction';
+                this.setActiveAllocation(allocationId);
+                $("#removeAllocationModal").modal("show");
+            },
+            onRemoveAllocationButtonClicked(event) {
+                event.preventDefault();
+                document.getElementById("remove-allocation-form").submit();
+            },
+        },
+        mounted() {
+            showSweetAlert(this.sweetAlert);
+        },
+    };
+    </script>
+}
+
+@section Modals
+{
+    <!-- Uspert Allocation Modal -->
+    <div class="modal fade"
+         id="upsertAllocationModal"
+         tabindex="-1"
+         role="dialog"
+         aria-labelledby="upsertAllocationModal"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="upsertAllocationModalLabel">
+                        {{
+                        postAction === '@Allocation.AddAllocationAction'
+                        ? "Alokasi Anggaran Baru"
+                        : "Ubah Alokasi Anggaran"
+                        }}
+                    </h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Tutup">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="upsert-allocation-form" method="post">
+                        <input type="hidden"
+                               name="action"
+                               v-bind:value="postAction" />
+                        <input type="hidden"
+                               name="id"
+                               v-if="postAction === '@Allocation.ModifyAllocationAction'"
+                               v-model="activeAllocation.id" />
+                        <div class="form-group row">
+                            <label for="name" class="col-md-4 col-form-label">Nama</label>
+                            <div class="col-md-8">
+                                <input type="text"
+                                       class="form-control"
+                                       id="name"
+                                       name="name"
+                                       v-model="activeAllocation.name" />
+                            </div>
+                        </div>
+                        <div class="form-group form-row">
+                            <label class="col-form-label">
+                                Wajib berdasarkan Undang-Undang?
+                            </label>
+                            <input type="hidden" name="isMandatory" v-model="activeAllocation.is_mandatory" />
+                            <div class="form-row ml-2">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input"
+                                           type="radio"
+                                           id="is_mandatory_true"
+                                           v-bind:value="true"
+                                           v-model="activeAllocation.is_mandatory">
+                                    <label class="form-check-label"
+                                           for="is_mandatory_true">Wajib</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input"
+                                           type="radio"
+                                           id="is_mandatory_false"
+                                           v-bind:value="false"
+                                           v-model="activeAllocation.is_mandatory">
+                                    <label class="form-check-label"
+                                           for="is_mandatory_false">Tidak ada ketentuan</label>
+                                </div>
+                            </div>
+                        </div>
+                        <hr v-if="activeAllocation.is_mandatory" />
+                        <div class="row" v-if="activeAllocation.is_mandatory">
+                            <div class="col-12">
+                                <div class="alert alert-info fade show font-weight-light" role="alert">
+                                    <strong>Informasi:</strong><br />
+                                    Ambang Batas Alokasi adalah nilai minimum alokasi anggaran dari total APBN
+                                    yang diatur berdasarkan ketentuan perundang-undangan.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row" v-if="activeAllocation.is_mandatory">
+                            <div class="col-12">
+                                <div class="alert alert-info fade show font-weight-light" role="alert">
+                                    <strong>Informasi:</strong><br />
+                                    Penjelasan Alokasi Wajib berisi penjelasan mengapa alokasi tersebut bersifat
+                                    wajib, peraturan hukum apa yang mengatur sifat tersebut, serta berapa
+                                    ambang batas alokasi yang ditentukan.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row" v-if="activeAllocation.is_mandatory">
+                            <label for="mandatory_threshold" class="col-md-6 col-12 col-form-label">
+                                Ambang Batas Alokasi (%)
+                            </label>
+                            <div class="col-md-4 col-9">
+                                <input type="range"
+                                       class="form-control"
+                                       min="0"
+                                       max="100"
+                                       step="0.01"
+                                       v-model.number="activeAllocation.mandatory_threshold" />
+                            </div>
+                            <div class="col-md-2 col-3">
+                                <input type="number"
+                                       class="form-control-plaintext"
+                                       min="0"
+                                       max="100"
+                                       step="0.01"
+                                       id="mandatory_threshold"
+                                       name="mandatoryThreshold"
+                                       v-model.number="activeAllocation.mandatory_threshold" />
+                            </div>
+                        </div>
+                        <div class="form-group row" v-if="activeAllocation.is_mandatory">
+                            <label for="mandatory_explanation" class="col-md-12 col-form-label">
+                                Penjelasan Alokasi Wajib
+                            </label>
+                            <div class="col-md-12">
+                                <textarea class="form-control"
+                                          id="mandatory_explanation"
+                                          name="mandatoryExplanation"
+                                          rows="5"
+                                          v-model="activeAllocation.mandatory_explanation">
+                                </textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary"
+                            type="button"
+                            data-dismiss="modal">
+                        Batal
+                    </button>
+                    <button class="btn btn-warning"
+                            type="button"
+                            v-on:click="onAddAllocationButtonClicked">
+                        {{
+                        postAction === '@Allocation.AddAllocationAction'
+                        ? "Tambah"
+                        : "Ubah"
+                        }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remove Allocation Modal -->
+    <div class="modal fade"
+         id="removeAllocationModal"
+         tabindex="-1" role="dialog"
+         aria-labelledby="removeAllocationModal"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="removeAllocationModalLabel">
+                        Hapus Alokasi Anggaran?
+                    </h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Tutup">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="remove-allocation-form" method="post">
+                        <input type="hidden" name="action" v-model="postAction" />
+                        <input type="hidden" name="id" v-model="activeAllocation.id" />
+                    </form>
+                    <p>
+                        Anda akan menghapus alokasi anggaran berikut.<br />
+                        &nbsp;-&nbsp;{{ activeAllocation.name }}
+                    </p>
+                    <p class="font-weight-bold">Lanjutkan?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary"
+                            type="button"
+                            data-dismiss="modal">
+                        Batal
+                    </button>
+                    <button class="btn btn-danger"
+                            type="button"
+                            v-on:click="onRemoveAllocationButtonClicked">
+                        Hapus
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}

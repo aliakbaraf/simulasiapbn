@@ -1,0 +1,46 @@
+﻿@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+@{
+    Layout = "_Layout";
+    ViewBag.Title = "Kesalahan";
+
+    bool isDevelopment = ViewBag.IsDevelopment;
+    string errorMessage = ViewBag.ErrorMessage;
+    string supportId = ViewBag.SupportId;
+    
+    var showErrorMessage = !string.IsNullOrEmpty(errorMessage) && isDevelopment;
+    var showSupportId = !string.IsNullOrEmpty(supportId) && supportId != "00000000000000000000000000000000";
+}
+
+<div class="d-flex flex-column justify-content-center align-items-center text-center  w-100 p-4"
+     style="min-height: calc(100vh - 4rem);">
+    <img class="application-logo"
+         src="~/media/application-logo.png"
+         alt="Simulasi APBN"/>
+    <h3 class="mt-5 mb-3">
+        <i class="fas fa-fw fa-sm fa-exclamation-triangle"></i>&nbsp;Terjadi kesalahan
+    </h3>
+    @if (showErrorMessage)
+        {
+            <p class="mb-3">
+                <strong>@(errorMessage)</strong>
+            </p>
+        }
+    
+        @if (showSupportId)
+        {
+            <div class="mb-3">
+                <p>Anda dapat menghubungi tim teknis kami dengan menyertakan kode penanganan berikut.</p>
+                <p>
+                    <code><strong>@(supportId)</strong></code>
+                </p>
+            </div>
+        }
+        <div>
+            <button class="btn btn-outline-primary" onclick="window.history.back()">Kembali</button>
+        </div>
+</div>

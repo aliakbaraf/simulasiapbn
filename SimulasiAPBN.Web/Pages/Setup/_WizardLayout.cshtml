@@ -1,0 +1,187 @@
+﻿@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+@using SimulasiAPBN.Common.Information
+@{
+    ViewBag.DeveloperLink = $"mailto:{Developer.Email}?subject=Dukungan Pemasangan Simulasi APBN";
+}
+<!--
+Simulasi APBN
+
+Program ini ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+untuk Kementerian Keuangan Republik Indonesia.
+-->
+<!DOCTYPE html>
+<html lang="id" xml:lang="id" xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="author" content="Kementerian Keuangan Republik Indonesia, Danang Galuh Tegar Prasetyo (https://danang.id/)">
+    <meta name="description" content="Simulasi APBN">
+
+    <title>Simulasi APBN@(ViewBag.Title is not null ? ": " + ViewBag.Title : "" )</title>
+    <partial name="_NoScriptPartial" />
+    
+    <partial name="_GoogleTagManagerScriptPartial" />
+    
+    <!-- Custom fonts -->
+    <link href="~/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <environment include="Development">
+        <link href="~/styles/layout.font.css" rel="stylesheet">
+    </environment>
+    <environment exclude="Development">
+        <link href="~/styles/layout.font.min.css" rel="stylesheet">
+    </environment>
+
+    <!-- Custom styles -->
+    <environment include="Development">
+        <link href="~/styles/layout.css" rel="stylesheet">
+    </environment>
+    <environment exclude="Development">
+        <link href="~/styles/layout.min.css" rel="stylesheet">
+    </environment>
+    
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body id="page-top">
+    <partial name="_NoScriptPartial" />
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+
+        <!-- Sidebar -->
+        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+
+            <!-- Sidebar - Brand -->
+            <a class="sidebar-brand bg-warning d-flex align-items-center justify-content-center" href="#">
+                <div class="sidebar-brand-icon">
+                    <img src="~/media/ministry-logo.png" height="32" alt="Kementerian Keuangan Republik Indonesia" />
+                </div>
+                <div class="sidebar-brand-text mx-1">&nbsp;&nbsp;Simulasi APBN</div>
+            </a>
+
+            <!-- Nav Item - Index -->
+            <li class="nav-item @if (ViewBag.Step == 1) { @Html.Raw("active") }">
+                <div class="nav-link">
+                    <i class="fas fa-fw fa-arrow-circle-right"></i>
+                    <span>Persiapan</span>
+                </div>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider" />
+
+            <!-- Heading -->
+            <div class="sidebar-heading">
+                Konfigurasi
+            </div>
+
+            <!-- Nav Item - Administrator -->
+            <li class="nav-item @if (ViewBag.Step == 2) { @Html.Raw("active") }">
+                <div class="nav-link">
+                    <i class="fas fa-fw fa-arrow-circle-right"></i>
+                    <span>Akun Pengelola</span>
+                </div>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider" />
+
+            <!-- Nav Item - Summary -->
+            <li class="nav-item @if (ViewBag.Step == 3) { @Html.Raw("active") }">
+                <div class="nav-link">
+                    <i class="fas fa-fw fa-arrow-circle-right"></i>
+                    <span>Ringkasan</span>
+                </div>
+            </li>
+
+            <!-- Nav Item - Finish -->
+            <li class="nav-item @if (ViewBag.Step == 4) { @Html.Raw("active") }">
+                <div class="nav-link">
+                    <i class="fas fa-fw fa-arrow-circle-right"></i>
+                    <span>Selesai</span>
+                </div>
+            </li>
+
+        </ul>
+        <!-- End of Sidebar -->
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column">
+
+            <!-- Main Content -->
+            <div id="content">
+
+                <!-- Topbar -->
+                <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+
+                    <!-- Sidebar Toggle (Topbar) -->
+                    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+                        <i class="fa fa-bars"></i>
+                    </button>
+
+                </nav>
+                <!-- End of Topbar -->
+                <!-- Begin Page Content -->
+                <div class="container-fluid">
+
+                    @RenderBody()
+
+                </div>
+                <!-- /.container-fluid -->
+
+            </div>
+            <!-- End of Main Content -->
+            <!-- Footer -->
+            <footer class="sticky-footer bg-white">
+                <div class="container my-auto">
+                    <div class="col-12 d-flex">
+                        <span>
+                            Ada pertanyaan?<br />Silakan
+                            <a href="@ViewBag.DeveloperLink">hubungi pengembang</a>.
+                        </span>
+                        <div class="ml-auto">
+                            @await RenderSectionAsync("CallToActions", false)
+                        </div>
+                    </div>
+                </div>
+            </footer>
+            <!-- End of Footer -->
+
+        </div>
+        <!-- End of Content Wrapper -->
+
+    </div>
+    <!-- End of Page Wrapper -->
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
+
+    <partial name="_FigletScriptPartial" />
+
+    <partial name="_VueScriptPartial" />
+
+    <partial name="_BootstrapJQueryScriptPartial" />
+
+    <partial name="_SweetAlertScriptPartial" />
+
+    <!-- Custom script for Layout -->
+    <environment include="Development">
+        <script src="~/scripts/layout.js"></script>
+    </environment>
+    <environment exclude="Development">
+        <script src="~/scripts/layout.min.js"></script>
+    </environment>
+
+
+    <!-- Page level custom scripts -->
+    @await RenderSectionAsync("Scripts", false)
+
+</body>
+
+</html>

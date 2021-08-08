@@ -1,0 +1,179 @@
+@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+@page
+@model Summary
+
+@{
+    ViewBag.Step = 3;
+    ViewBag.Title = "Ringkasan Pemasangan";
+    Layout = "_WizardLayout";
+}
+
+
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Ringkasan Pemasangan</h1>
+</div>
+
+<partial name="_AlertPartial" />
+
+<!-- Content Row -->
+<div class="row">
+    <div class="col-12">
+        <p>
+            Mohon periksa kembali data berikut sebelum melakukan pemasangan Simulasi APBN.
+        </p>
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Data Akun Pengelola</h6>
+            </div>
+            <div class="card-body">
+                <form id="account-form" method="post">
+                    <div class="form-group row">
+                        <label for="name" class="col-md-3 col-form-label font-weight-bold">Nama Lengkap</label>
+                        <div class="col-md-9">
+                            <input readonly
+                                   type="text"
+                                   class="form-control-plaintext"
+                                   id="name"
+                                   name="name"
+                                   v-model="name" />
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="email" class="col-md-3 col-form-label font-weight-bold">Alamat Email</label>
+                        <div class="col-md-9">
+                            <input readonly
+                                   type="text"
+                                   class="form-control-plaintext"
+                                   id="email"
+                                   name="email"
+                                   v-model="email" />
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="username" class="col-md-3 col-form-label font-weight-bold">Nama Pengguna</label>
+                        <div class="col-md-9">
+                            <input readonly
+                                   type="text"
+                                   class="form-control-plaintext"
+                                   id="username"
+                                   name="username"
+                                   v-model="username" />
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="password" class="col-md-3 col-form-label font-weight-bold">Kata Sandi</label>
+                        <div class="col-md-9">
+                            <input readonly
+                                   type="text"
+                                   class="form-control-plaintext"
+                                   id="password"
+                                   name="password"
+                                   v-model="password" />
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section CallToActions {
+    <button class="btn btn-warning"
+            v-bind:disabled="loadingState"
+            v-on:click="onBackButtonClicked">
+        <i class="fas fa-fw fa-less-than"></i>&nbsp;Kembali
+    </button>
+    &nbsp;
+    <button class="btn btn-primary"
+            v-bind:disabled="loadingState"
+            v-on:click="onNextButtonClicked">
+        <i class="fas fa-spinner fa-spin" v-if="loadingState"></i>
+        <span v-if="!loadingState">
+            Pasang&nbsp;<i class="fas fa-fw fa-greater-than"></i>
+        </span>
+    </button>
+}
+
+@section Scripts
+{
+    <script src="~/vendor/localforage/localforage.min.js"></script>
+    <script lang="js">
+    var app = {
+       data: {
+            alerts: [{
+                text: "@Model.ErrorMessage",
+                title: "Terjadi Kesalahan!",
+                type: "danger"
+            }],
+            sweetAlert: {
+                text: "@Model.ErrorMessage",
+                title: "Terjadi Kesalahan!",
+                icon: "error",
+                button: "OK"
+            },
+            loadingState: false,
+            name: "",
+            email: "",
+            username: "",
+            password: "",
+        },
+        methods: {
+            onAlertClose() {
+                this.alerts.splice(index,  1);
+            },
+            loadLocal(callback) {
+                if (callback === void 0) {
+                    callback = function (err) {}
+                }
+                if (window.localforage !== void 0) {
+                    window.localforage.getItem("name").then((name) => {
+                        this.name = name;
+                        return window.localforage.getItem("email");
+                    }).then((email) => {
+                        this.email = email;
+                        return window.localforage.getItem("username");
+                    }).then((username) => {
+                        this.username = username;
+                        return window.localforage.getItem("password");
+                    }).then((password) => {
+                        this.password = password;
+                    }).then(() => callback())
+                    .catch(callback);
+                } else {
+                    callback();
+                }
+            },
+            onBackButtonClicked(event) {
+                event.preventDefault();
+                window.location.href = "/setup/administrator";
+            },
+            onNextButtonClicked(event) {
+                event.preventDefault();
+                this.loadingState = true;
+                document.getElementById("account-form").submit();
+            },
+            showAlert(text) {
+                this.sweetAlert.text = text;
+                showSweetAlert(this.sweetAlert);
+                this.alerts.push({ text,  title: "Terjadi Kesalahan", type:"danger" });
+            },
+        },
+        mounted() {
+            this.showAlert(this.sweetAlert.text);
+            this.loadLocal((err) => {
+                if (err) {
+                    this.showAlert(err);
+                }
+            });
+        }
+    };
+    app.el = "#wrapper";
+    app = new Vue(app);
+    </script>
+}

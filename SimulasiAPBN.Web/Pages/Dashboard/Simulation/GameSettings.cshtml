@@ -1,0 +1,294 @@
+@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+@page
+@using Newtonsoft.Json
+@using SimulasiAPBN.Core.Common
+@using SimulasiAPBN.Core.Enumerators
+@model GameSettings
+
+@{
+    Layout = "_Layout";
+    ViewBag.Title = "Pengaturan Permainan";
+}
+
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Pengaturan Permainan</h1>
+</div>
+
+<partial name="_AlertPartial" />
+
+<!-- Content Row -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-sm-flex align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    Kebijakan Terkait
+                </h6>
+                <button class="btn btn-primary btn-sm ml-auto"
+                        v-bind:disabled="policiesLoadingState"
+                        v-on:click="onSavePoliciesButtonClicked">
+                    <i class="fas fa-save fa-fw"></i>&nbsp;
+                    <i class="fas fa-spinner fa-spin" v-if="policiesLoadingState"></i>
+                    <span v-if="!policiesLoadingState">Simpan</span>
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info fade show font-weight-light" role="alert">
+                    <strong>Informasi:</strong><br />
+                    Nilai Produk Domestik Bruto (PDB) dalam triliun Rupiah.
+                </div>
+                <div class="alert alert-info fade show font-weight-light" role="alert">
+                    <strong>Informasi:</strong><br />
+                    Ambang Batas Defisit adalah nilai maksimum defisit APBN atas Produk Domestik Bruto
+                    yang diatur berdasarkan ketentuan perundang-undangan.
+                </div>
+                <form method="post" id="policy-form">
+                    <input type="hidden" name="action" value="@GameSettings.SavePoliciesAction">
+                    <div class="form-group row">
+                        <label for="GrossDomesticProduct"
+                               class="col-12 col-md-4 col-lg-3 col-form-label">
+                            Produk Domestik Bruto
+                        </label>
+                        <div class="col-9 col-md-6 col-lg-7">
+                            <input type="number"
+                                   class="form-control"
+                                   min="0"
+                                   max="9999999999999"
+                                   step="0.000000000001"
+                                   id="GrossDomesticProduct"
+                                   name="GrossDomesticProduct"
+                                   v-bind:readonly="policiesLoadingState"
+                                   v-model="grossDomesticProduct">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="DeficitThreshold"
+                               class="col-12 col-md-4 col-lg-3 col-form-label">
+                            Ambang Batas Defisit (%)
+                        </label>
+                        <div class="col-9 col-md-6 col-lg-7">
+                            <input type="range"
+                                   class="form-control"
+                                   min="0"
+                                   max="100"
+                                   step="0.01"
+                                   id="DeficitThreshold"
+                                   name="DeficitThreshold"
+                                   v-bind:readonly="policiesLoadingState"
+                                   v-model="deficitThreshold" />
+                        </div>
+                        <div class="col-3 col-md-2">
+                            <input type="number"
+                                   min="0"
+                                   max="100"
+                                   step="0.01"
+                                   class="form-control-plaintext"
+                                   v-bind:readonly="policiesLoadingState"
+                                   v-model="deficitThreshold">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="DeficitLaw"
+                               class="col-12 col-md-4 col-lg-3 col-form-label">
+                            UU mengatur Defisit
+                        </label>
+                        <div class="col-9 col-md-6 col-lg-7">
+                            <input type="text"
+                                   class="form-control"
+                                   id="DeficitLaw"
+                                   name="DeficitLaw"
+                                   v-bind:readonly="policiesLoadingState"
+                                   v-model="deficitLaw">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="DebtRatio"
+                               class="col-12 col-md-4 col-lg-3 col-form-label">
+                            Rasio Utang terhadap PDB (%)
+                        </label>
+                        <div class="col-9 col-md-6 col-lg-7">
+                            <input type="range"
+                                   class="form-control"
+                                   min="0"
+                                   max="100"
+                                   step="0.01"
+                                   id="DebtRatio"
+                                   name="DebtRatio"
+                                   v-bind:readonly="policiesLoadingState"
+                                   v-model="debtRatio" />
+                        </div>
+                        <div class="col-3 col-md-2">
+                            <input type="number"
+                                   min="0"
+                                   max="100"
+                                   step="0.01"
+                                   class="form-control-plaintext"
+                                   v-bind:readonly="policiesLoadingState"
+                                   v-model="debtRatio">
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-sm-flex align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    Konten
+                </h6>
+                <button class="btn btn-primary btn-sm ml-auto"
+                        v-bind:disabled="contentsLoadingState || !isVideoAcceptable"
+                        v-on:click="onSaveContentsButtonClicked">
+                    <i class="fas fa-save fa-fw"></i>&nbsp;
+                    <i class="fas fa-spinner fa-spin" v-if="contentsLoadingState"></i>
+                    <span v-if="!contentsLoadingState">Simpan</span>
+                </button>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="web-content-form">
+                    <input type="hidden" name="action" value="@GameSettings.SaveContentsAction">
+                    @foreach (var webContent in Model.WebContents.OrderBy(webContent => webContent.Key))
+                    {
+                        @if (webContent.Key == WebContentKey.VideoUrl &&
+                           !webContent.Value.StartsWith("http"))
+                        {
+                            var baseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}".TrimEnd('/');
+                            webContent.Value = $"{baseUrl}{webContent.Value}";
+                        }
+                        <div class="form-group row">
+                            <label for="@Formatter.GetWebContentName(webContent.Key)"
+                                   class="col-12 col-md-4 col-lg-3 col-form-label">
+                                @Formatter.GetWebContentName(webContent.Key)
+                            </label>
+                            <div class="col-12 col-md-8 col-lg-9">
+                                @if (webContent.Key == WebContentKey.VideoUrl)
+                                {
+                                    <video height="360" controls>
+                                        <source src="@webContent.Value" type="video/mp4">
+                                        Peramban Anda tidak mendukung pemutar video.
+                                    </video>
+                                    <br />
+                                    <div class="input-group">
+                                        <div class="custom-file">
+                                            <input asp-for="VideoFormFile"
+                                                   type="file"
+                                                   accept="video/mp4,video/x-m4v,video/*"
+                                                   class="form-control custom-file"
+                                                   v-bind:readonly="contentsLoadingState"
+                                                   v-on:change="onVideoFileChange" />
+                                            <label asp-for="VideoFormFile"
+                                                   class="custom-file-label">
+                                                {{ videoFile ? videoFile.name : "Pilih video" }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <br />
+                                    <div class="alert alert-primary fade show font-weight-light" role="alert">
+                                        <strong>Informasi:</strong><br />
+                                        Ukuran berkas video maksimum 40 MB.
+                                    </div>
+                                    <div class="alert alert-danger fade show font-weight-light"
+                                         role="alert"
+                                         v-if="!isVideoAcceptable">
+                                        <strong>Terjadi Kesalahan!</strong><br />
+                                        Ukuran berkas yang Anda pilih melebihi batas 40 MB.
+                                        Silakan coba berkas yang lain.
+                                    </div>
+                                }
+                                else if (GameSettings.IsMultilineValue(webContent.Key))
+                                {
+                                    var lineValues = JsonConvert
+                                        .DeserializeObject<List<string>>(webContent.Value);
+                                    webContent.Value = string.Join("\n", lineValues);
+                                    <textarea id="@Formatter.GetWebContentName(webContent.Key)"
+                                              name="@Formatter.GetWebContentName(webContent.Key)"
+                                              class="form-control"
+                                              v-bind:readonly="contentsLoadingState"
+                                              rows="4">@webContent.Value</textarea>
+                                }
+                                else
+                                {
+                                    <input id="@Formatter.GetWebContentName(webContent.Key)"
+                                           name="@Formatter.GetWebContentName(webContent.Key)"
+                                           value="@webContent.Value"
+                                           type="text"
+                                           v-bind:readonly="contentsLoadingState"
+                                           class="form-control" />
+                                }
+                            </div>
+                        </div>
+                    }
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts
+{
+    <script lang="js">
+    var app = {
+        data: {
+            alerts: JSON.parse('@Json.Serialize(Model.Alerts)'),
+            sweetAlert: {
+                text: '@Model.SweetAlert.Text',
+                title: '@Model.SweetAlert.Title',
+                icon: '@Model.SweetAlert.Type',
+                button: "OK"
+            },
+            deficitThreshold: parseFloat(@Model.DeficitThreshold),
+            deficitLaw: '@Model.DeficitLaw',
+            debtRatio: parseFloat(@Model.DebtRatio),
+            grossDomesticProduct: parseFloat(@Model.GrossDomesticProduct),
+            videoFile: null,
+            contentsLoadingState: false,
+            policiesLoadingState: false,
+        },
+        computed: {
+        	isVideoAcceptable() {
+                return this.videoFile ? this.videoFile.size < 41943040 : true;
+        	},
+        },
+        methods: {
+            onAlertClose(index) {
+                this.alerts.splice(index,  1);
+            },
+            showAlert(text, title, type) {
+                this.sweetAlert.text = text;
+                this.sweetAlert.title = title;
+                this.sweetAlert.icon = type;
+                showSweetAlert(this.sweetAlert);
+                this.alerts.push({ text, title, type });
+            },
+            onSaveContentsButtonClicked(event) {
+                event.preventDefault();
+                this.contentsLoadingState = true;
+                document.getElementById("web-content-form").submit();
+            },
+            onSavePoliciesButtonClicked(event) {
+                event.preventDefault();
+                this.policiesLoadingState = true;
+                document.getElementById("policy-form").submit();
+            },
+            onVideoFileChange(event) {
+            	if (!event.target.files[0]) {
+            		return;
+            	}
+            	this.videoFile = event.target.files[0];
+            },
+        },
+        mounted() {
+            showSweetAlert(this.sweetAlert);
+        },
+    };
+    </script>
+}

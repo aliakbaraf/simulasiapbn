@@ -1,0 +1,28 @@
+﻿@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+<!-- Nav Item - Dashboard -->
+@{
+    var path = Context.Request.Path;
+    var pathValue = path.Value?.ToLower();
+
+}
+<li class="nav-item @if (pathValue == "/dashboard" || pathValue == "/dashboard/index") {
+                        @Html.Raw("active")
+                    }">
+    <a class="nav-link" asp-page="/Dashboard/Index">
+        <i class="fas fa-fw fa-home"></i>
+        <span>Dasbor</span>
+    </a>
+</li>
+
+<!-- Nav Item - Go to Game -->
+<li class="nav-item">
+    <a class="nav-link" href="/" target="_blank">
+        <i class="fas fa-fw fa-arrow-right"></i>
+        <span>Menuju Simulasi</span>
+    </a>
+</li>

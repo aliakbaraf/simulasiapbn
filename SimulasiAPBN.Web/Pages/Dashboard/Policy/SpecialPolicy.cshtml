@@ -1,0 +1,392 @@
+@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+@page
+@using SimulasiAPBN.Core.Common
+@model SpecialPolicy
+
+@{
+    Layout = "_Layout";
+    ViewBag.Title = "Kebijakan Khusus";
+}
+
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Kebijakan Khusus</h1>
+    @if (Model.StateBudgets.Any())
+    {
+        <button class="btn btn-warning btn-sm" v-on:click="onShowAddSpecialPolicyModal">
+            <i class="fas fa-plus fa-fw"></i>&nbsp;
+            Kebijakan Baru
+        </button>
+    }
+</div>
+
+<partial name="_AlertPartial" />
+
+<!-- Content Row -->
+<div class="row">
+    @if (!Model.StateBudgets.Any())
+    {
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Daftar Kebijakan Khusus</h6>
+                </div>
+                <div class="card-body">
+                    Belum ada Kebijakan Anggaran Pendapatan dan Belanja Negara yang dicatat.<br />
+                    Silakan tambah kebijakan baru untuk memulai.
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-sm-flex align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Daftar Kebijakan Khusus</h6>
+                    <form method="get" class="form-inline">
+                        <div class="form-group mx-sm-3 mb-2">
+                            <label for="stateBudgetId" class="sr-only">
+                                Kebijakan
+                            </label>
+                            <select class="custom-select custom-select-sm"
+                                    name="StateBudgetId"
+                                    id="stateBudgetId"
+                                    v-model="activeStateBudgetId">
+                                @foreach (var stateBudget in Model.StateBudgets)
+                                {
+                                    <option value="@stateBudget.Id">
+                                        @Formatter.GetStateBudgetPolicyName(stateBudget)
+                                    </option>
+                                }
+                            </select>
+                        </div>&nbsp;
+                        <button class="btn btn-primary btn-sm mb-2" type="submit">
+                            Ganti
+                        </button>
+                    </form>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="specialPolicyTable">
+                            <thead class="text-center">
+                            <th>Nama Kebijakan</th>
+                            <th>Status</th>
+                            <th>Total Alokasi</th>
+                            <th>Aksi</th>
+                            </thead>
+                            <tbody>
+                                @foreach (var policy in Model.SpecialPolicies)
+                                {
+                                    <tr>
+                                        <td>@policy.Name</td>
+                                        <td class="text-center">
+                                            @if (policy.IsActive)
+                                            {
+                                                <strong>Aktif</strong>
+                                            }
+                                            else
+                                            {
+                                                <span>Tidak Aktif</span>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            {{toCurrency(@policy.TotalAllocation)}} T
+                                        </td>
+                                        <td class="text-center">
+                                            <a class="btn btn-outline-primary btn-sm"
+                                               asp-page="SpecialPolicyAllocation"
+                                               asp-route-SpecialPolicyId="@policy.Id">
+                                                Atur Alokasi
+                                            </a>&nbsp;
+                                            <button class="btn btn-outline-primary btn-sm"
+                                                    v-on:click="e => onShowModifySpecialPolicyModal(e, '@policy.Id')">
+                                                Ubah
+                                            </button>&nbsp;
+                                            <button class="btn btn-danger btn-sm"
+                                                    v-on:click="e => onShowRemoveSpecialPolicyModal(e, '@policy.Id')">
+                                                Hapus
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Styles
+{
+    <partial name="_DataTableStylePartial" />
+}
+
+@section Scripts
+{
+    <partial name="_DataTableScriptPartial" />
+    <script lang="js">
+    var app = {
+        data: {
+            alerts: JSON.parse('@Json.Serialize(Model.Alerts)'),
+            sweetAlert: {
+                text: '@Model.SweetAlert.Text',
+                title: '@Model.SweetAlert.Title',
+                icon: '@Model.SweetAlert.Type',
+                button: "OK"
+            },
+            stateBudget: JSON.parse('@Json.Serialize(Model.StateBudget)'),
+            specialPolicies: JSON.parse('@Json.Serialize(Model.SpecialPolicies)'),
+            activeStateBudgetId: '@Model.StateBudget.Id',
+            activeSpecialPolicy: {
+            	id: "",
+            	name: "",
+            	description: "",
+            	total_allocation: 0,
+            	is_active: false,
+            },
+            loadingState: false,
+            postAction: '@SpecialPolicy.AddSpecialPolicyAction',
+        },
+        methods: {
+            toLocale(value) {
+                return window.toLocale(value);
+            },
+            toCurrency(value) {
+                return window.toCurrency(value);
+            },
+            onAlertClose(index) {
+                this.alerts.splice(index,  1);
+            },
+            showAlert(text, title, type) {
+                this.sweetAlert.text = text;
+                this.sweetAlert.title = title;
+                this.sweetAlert.icon = type;
+                showSweetAlert(this.sweetAlert);
+                this.alerts.push({ text, title, type });
+            },
+            setActiveSpecialPolicy(specialPolicyId) {
+                var emptySpecialPolicy = {
+                	id: "",
+                	name: "",
+                	description: "",
+            	    total_allocation: 0,
+            	    is_active: false,
+                };
+                if (!specialPolicyId) {
+                    this.activeSpecialPolicy = Object.assign({}, emptySpecialPolicy);
+                    return;
+                }
+                var specialPolicy = this.specialPolicies.find(entity => entity.id === specialPolicyId);
+                if (!specialPolicy) {
+                    this.activeSpecialPolicy = Object.assign({}, emptySpecialPolicy);
+                    return;
+                }
+                this.activeSpecialPolicy = Object.assign({}, specialPolicy);
+            },
+            onShowAddSpecialPolicyModal(event) {
+            	event.preventDefault();
+            	this.setActiveSpecialPolicy();
+                this.postAction = '@SpecialPolicy.AddSpecialPolicyAction';
+                $("#specialPolicyModal").modal("show");
+            },
+            onShowModifySpecialPolicyModal(event, specialPolicyId) {
+            	event.preventDefault();
+            	this.setActiveSpecialPolicy(specialPolicyId);
+                this.postAction = '@SpecialPolicy.ModifySpecialPolicyAction';
+                $("#specialPolicyModal").modal("show");
+            },
+            onSaveSpecialPolicyButtonClicked(event) {
+            	event.preventDefault();
+            	this.loadingState = true;
+                document.getElementById("special-policy-form").submit();
+            },
+            onShowRemoveSpecialPolicyModal(event, specialPolicyId) {
+            	event.preventDefault();
+            	this.setActiveSpecialPolicy(specialPolicyId);
+                this.postAction = '@SpecialPolicy.RemoveSpecialPolicyAction';
+                $("#removeSpecialPolicyModal").modal("show");
+            },
+            onRemoveSpecialPolicyButtonClicked(event) {
+            	event.preventDefault();
+            	this.loadingState = true;
+                document.getElementById("remove-special-policy-form").submit();
+            },
+        },
+        mounted() {
+            showSweetAlert(this.sweetAlert);
+            @if (Model.StateBudgets.Any())
+            {
+                @Html.Raw("$('#specialPolicyTable').DataTable();")
+            }
+        },
+    };
+    </script>
+}
+
+@section Modals
+{
+    <!-- Special Policy Modal -->
+    <div class="modal fade"
+         id="specialPolicyModal"
+         tabindex="-1"
+         role="dialog"
+         aria-labelledby="specialPolicyModal"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="specialPolicyModalLabel">
+                        Kebijakan Khusus
+                    </h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Tutup">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info fade show font-weight-light" role="alert">
+                        <strong>Informasi:</strong><br />
+                        Nilai Total Alokasi dalam triliun Rupiah.
+                    </div>
+                    <form id="special-policy-form" method="post">
+                        <input type="hidden" name="id" v-model="activeSpecialPolicy.id">
+                        <input type="hidden" name="action" v-model="postAction" />
+                        <div class="form-group row">
+                            <label for="name" class="col-md-4 col-form-label">
+                                Nama
+                            </label>
+                            <div class="col-md-8">
+                                <input type="text"
+                                       class="form-control"
+                                       id="name"
+                                       name="name"
+                                       v-bind:readonly="loadingState"
+                                       v-model="activeSpecialPolicy.name" />
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="description" class="col-md-4 col-form-label">
+                                Deskripsi
+                            </label>
+                            <div class="col-md-8">
+                                <textarea class="form-control"
+                                          id="description"
+                                          name="description"
+                                          rows="5"
+                                          v-bind:readonly="loadingState"
+                                          v-model="activeSpecialPolicy.description">
+                                </textarea>
+                            </div>
+                        </div>
+                        <div class="form-group form-row">
+                            <label class="col-form-label">
+                                Status
+                            </label>
+                            <input type="hidden" name="isActive" v-model="activeSpecialPolicy.is_active" />
+                            <div class="form-row ml-2">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input"
+                                           type="radio"
+                                           id="is_active_true"
+                                           v-bind:value="true"
+                                           v-model="activeSpecialPolicy.is_active">
+                                    <label class="form-check-label"
+                                           for="is_active_true">Aktif</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input"
+                                           type="radio"
+                                           id="is_active_false"
+                                           v-bind:value="false"
+                                           v-model="activeSpecialPolicy.is_active">
+                                    <label class="form-check-label"
+                                           for="is_active_false">Tidak Aktif</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="total_allocation" class="col-md-4 col-form-label">
+                                Total Alokasi
+                            </label>
+                            <div class="col-md-8">
+                                <input type="number"
+                                       min="1"
+                                       step="0.000001"
+                                       class="form-control"
+                                       id="total_allocation"
+                                       name="totalAllocation"
+                                       v-bind:readonly="loadingState"
+                                       v-model="activeSpecialPolicy.total_allocation" />
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary"
+                            type="button"
+                            v-bind:disabled="loadingState"
+                            data-dismiss="modal">
+                        Batal
+                    </button>
+                    <button class="btn btn-warning"
+                            type="button"
+                            v-bind:disabled="loadingState"
+                            v-on:click="onSaveSpecialPolicyButtonClicked">
+                        <i class="fas fa-spinner fa-spin" v-if="loadingState"></i>
+                        <span v-else>Simpan</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remove Special Policy Modal -->
+    <div class="modal fade"
+         id="removeSpecialPolicyModal"
+         tabindex="-1" role="dialog"
+         aria-labelledby="removeSpecialPolicyModal"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="removeSpecialPolicyModalLabel">
+                        Hapus Kebijakan khusus?
+                    </h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Tutup">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="remove-special-policy-form" method="post">
+                        <input type="hidden" name="action" v-model="postAction" />
+                        <input type="hidden" name="id" v-model="activeSpecialPolicy.id" />
+                    </form>
+                    <p>
+                        Anda akan menghapus kebijakan khusus berikut.<br />
+                        - <strong>{{ activeSpecialPolicy.name }}</strong><br />
+                    </p>
+                    <p class="font-weight-bold">Lanjutkan?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary"
+                            type="button"
+                            data-dismiss="modal">
+                        Batal
+                    </button>
+                    <button class="btn btn-danger"
+                            type="button"
+                            v-on:click="onRemoveSpecialPolicyButtonClicked">
+                        Hapus
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}

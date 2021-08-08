@@ -1,0 +1,118 @@
+﻿@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+<!-- Nav Item - Dashboard -->
+@{
+    var path = Context.Request.Path;
+    var pathValue = path.Value?.ToLower();
+
+}
+<li class="nav-item @if (pathValue == "/dashboard" || pathValue == "/dashboard/index") {
+                        @Html.Raw("active")
+                    }">
+    <a class="nav-link" asp-page="/Dashboard/Index">
+        <i class="fas fa-fw fa-home"></i>
+        <span>Dasbor</span>
+    </a>
+</li>
+
+<!-- Nav Item - Go to Game -->
+<li class="nav-item">
+    <a class="nav-link" href="/" target="_blank">
+        <i class="fas fa-fw fa-arrow-right"></i>
+        <span>Menuju Simulasi</span>
+    </a>
+</li>
+
+<!-- Divider -->
+<hr class="sidebar-divider">
+
+<!-- Heading -->
+<div class="sidebar-heading">
+    Fungsi Anggaran
+</div>
+
+<!-- Nav Item - Allocation -->
+<li class="nav-item @if (path.StartsWithSegments("/Dashboard/Budgeting/Allocation")) { @Html.Raw("active") }">
+    <a class="nav-link" asp-page="/Dashboard/Budgeting/Allocation">
+        <i class="fas fa-fw fa-wallet"></i>
+        <span>Alokasi</span>
+    </a>
+</li>
+
+<!-- Nav Item - Budget -->
+<li class="nav-item @if (path.StartsWithSegments("/Dashboard/Budgeting/Budget") ||
+                         path.StartsWithSegments("/Dashboard/Budgeting/BudgetDetail")) { @Html.Raw("active") }">
+    <a class="nav-link" asp-page="/Dashboard/Budgeting/Budget">
+        <i class="fas fa-fw fa-percentage"></i>
+        <span>Anggaran</span>
+    </a>
+</li>
+
+<!-- Divider -->
+<hr class="sidebar-divider">
+
+<!-- Heading -->
+<div class="sidebar-heading">
+    Kebijakan
+</div>
+
+<!-- Nav Item - State Budget -->
+<li class="nav-item @if (path.StartsWithSegments("/Dashboard/Policy/StateBudget")) { @Html.Raw("active") }">
+    <a class="nav-link" asp-page="/Dashboard/Policy/StateBudget">
+        <i class="fas fa-fw fa-balance-scale"></i>
+        <span>APBN</span>
+    </a>
+</li>
+
+<!-- Nav Item - Country Income -->
+<li class="nav-item @if (path.StartsWithSegments("/Dashboard/Policy/CountryIncome")) { @Html.Raw("active") }">
+    <a class="nav-link" asp-page="/Dashboard/Policy/CountryIncome">
+        <i class="fas fa-fw fa-money-bill"></i>
+        <span>Pendapatan Negara</span>
+    </a>
+</li>
+
+<!-- Nav Item - State Expenditure -->
+<li class="nav-item @if (path.StartsWithSegments("/Dashboard/Policy/StateExpenditure") ||
+                         path.StartsWithSegments("/Dashboard/Policy/StateExpenditureAllocation")) { @Html.Raw("active") }">
+    <a class="nav-link" asp-page="/Dashboard/Policy/StateExpenditure">
+        <i class="fas fa-fw fa-shopping-bag"></i>
+        <span>Belanja Negara</span>
+    </a>
+</li>
+
+<!-- Nav Item - Special Policy -->
+<li class="nav-item @if (path.StartsWithSegments("/Dashboard/Policy/SpecialPolicy") ||
+                         path.StartsWithSegments("/Dashboard/Policy/SpecialPolicyAllocation")) { @Html.Raw("active") }">
+    <a class="nav-link" asp-page="/Dashboard/Policy/SpecialPolicy">
+        <i class="fas fa-fw fa-gavel"></i>
+        <span>Kebijakan Khusus</span>
+    </a>
+</li>
+
+<!-- Divider -->
+<hr class="sidebar-divider">
+
+<!-- Heading -->
+<div class="sidebar-heading">
+    Simulasi
+</div>
+
+<!-- Nav Item - Simulation Settings -->
+<li class="nav-item @if (path.StartsWithSegments("/Dashboard/Simulation/UserManagement")) { @Html.Raw("active") }">
+    <a class="nav-link" asp-page="/Dashboard/Simulation/UserManagement">
+        <i class="fas fa-fw fa-gamepad"></i>
+        <span>Manajemen Pengguna</span>
+    </a>
+</li>
+
+<li class="nav-item @if (path.StartsWithSegments("/Dashboard/Simulation/GameSettings")) { @Html.Raw("active") }">
+    <a class="nav-link" asp-page="/Dashboard/Simulation/GameSettings">
+        <i class="fas fa-fw fa-gamepad"></i>
+        <span>Pengaturan Permainan</span>
+    </a>
+</li>

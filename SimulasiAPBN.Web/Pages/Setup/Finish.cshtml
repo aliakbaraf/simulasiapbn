@@ -1,0 +1,74 @@
+@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+@page
+@model Finish
+
+@{
+    ViewBag.Step = 4;
+    ViewBag.Title = "Pemasangan Selesai";
+    Layout = "_WizardLayout";
+}
+
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Pemasangan Selesai</h1>
+</div>
+
+<!-- Content Row -->
+<div class="row">
+    <div class="col-12">
+        <p>Simulasi APBN telah terpasang dan dapat digunakan.</p>
+        <p class="text-danger">
+            Proses pemasangan ini hanya berlangsung satu kali pada saat pertama.
+            Setelah laman ini ditutup, Anda tidak dapat lagi mengakses laman pemasangan ini kembali.
+        </p>
+    </div>
+</div>
+
+@section CallToActions {
+    <button class="btn btn-primary" v-on:click="onNextButtonClicked">
+        Menuju Dasbor&nbsp;<i class="fas fa-fw fa-greater-than"></i>
+    </button>
+}
+
+
+@section Scripts
+{
+    <script src="~/vendor/localforage/localforage.min.js"></script>
+    <script lang="js">
+        var app = {
+            data: {},
+            methods: {
+                clearLocal(callback) {
+                    if (callback === void 0) {
+                        callback = function (err) { }
+                    }
+                    if (window.localforage !== void 0) {
+                        window.localforage.clear()
+                            .then(() => callback())
+                            .catch(callback);
+                    } else {
+                        callback();
+                    }
+                },
+                onNextButtonClicked(event) {
+                    event.preventDefault();
+                    window.location.href = "/dashboard";
+                },
+            },
+            mounted() {
+                this.clearLocal((err) => {
+                    if (err) {
+                        console.error(err);
+                    }
+                });
+            }
+        };
+        app.el = "#wrapper";
+        app = new Vue(app);
+    </script>
+}

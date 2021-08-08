@@ -1,0 +1,398 @@
+@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+@page
+@model StateExpenditureAllocation
+
+@{
+    Layout = "_Layout";
+    ViewBag.Title = Model.BudgetName;
+}
+
+<!-- FORMATTING DONE -->
+<!-- Page Heading -->
+<div class="d-sm-flex mb-4">
+    <a class="btn btn-sm" asp-page="StateExpenditure" asp-route-StateBudgetId="@Model.StateExpenditure.StateBudgetId">
+        <i class="fas fa-fw fa-arrow-left"></i>&nbsp;
+    </a>&nbsp;
+    <h1 class="h3 mb-0 text-gray-800">@Model.BudgetName</h1>
+    @if (Model.StateExpenditure is not null)
+    {
+        <button class="btn btn-warning btn-sm ml-auto" v-on:click="onShowAddStateExpenditureAllocationModal">
+            <i class="fas fa-plus fa-fw"></i>&nbsp;
+            Tambah Alokasi
+        </button>
+    }
+</div>
+
+<partial name="_AlertPartial" />
+
+<!-- Content Row -->
+@if (Model.StateExpenditure is not null)
+{
+    <div class="row">
+        <div class="col-12">
+            @{
+                var usedPercentage = (Model.UsedAllocationValue / Model.StateExpenditure.TotalAllocation) * 100;
+                var availablePercentage = (Model.AvailableAllocationValue / Model.StateExpenditure.TotalAllocation) * 100;
+            }
+            <table class="mb-2">
+                <tr>
+                    <td class="p-1">Jenis Anggaran</td>
+                    <td class="p-1">:</td>
+                    <td class="p-1">@Model.BudgetType</td>
+                </tr>
+                <tr>
+                    <td class="p-1">Nilai Total Alokasi</td>
+                    <td class="p-1">:</td>
+                    <td class="p-1"><strong>{{toCurrency(@Model.StateExpenditure.TotalAllocation)}} T</strong></td>
+                </tr>
+                <tr>
+                    <td class="p-1">Telah Dialokasikan</td>
+                    <td class="p-1">:</td>
+                    <td class="p-1">{{toCurrency(@Model.UsedAllocationValue)}} T ({{toLocale(@usedPercentage)}}% total alokasi)</td>
+                </tr>
+                <tr>
+                    <td class="p-1">Belum Dialokasikan</td>
+                    <td class="p-1">:</td>
+                    <td class="p-1">{{toCurrency(@Model.AvailableAllocationValue)}} T ({{toLocale(@availablePercentage)}}% total alokasi)</td>
+                </tr>
+            </table>
+        </div>
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Daftar Alokasi Anggaran</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered"
+                               id="stateExpenditureAllocationTable">
+                            <thead class="text-center">
+                                <tr>
+                                    <th>Nama</th>
+                                    <th>Total Alokasi</th>
+                                    <th>Persentase</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var stateExpenditureAllocation in Model.StateExpenditureAllocations)
+                                {
+                                    <tr>
+                                        <td>@stateExpenditureAllocation.Allocation.Name</td>
+                                        <td class="text-center">
+                                            {{toCurrency(@stateExpenditureAllocation.TotalAllocation)}} T
+                                        </td>
+                                        <td class="text-center">
+                                            {{toLocale(@stateExpenditureAllocation.Percentage)}}% dari Anggaran
+                                        </td>
+                                        <td class="text-center">
+                                            <button class="btn btn-sm btn-outline-primary"
+                                                    v-on:click="e => onShowModifyStateExpenditureAllocationModal(e, '@stateExpenditureAllocation.Id')">
+                                                Ubah
+                                            </button>&nbsp;
+                                            <button class="btn btn-sm btn-danger"
+                                                    v-on:click="e => onShowRemoveStateExpenditureAllocationModal(e, '@stateExpenditureAllocation.Id')">
+                                                Hapus
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12">
+            <p>
+                Catatan: <i>
+                    Anda dapat mengatur Alokasi yang tersedia di panel
+                    <a asp-page="/Dashboard/Budgeting/Allocation">Alokasi Anggaran</a>.
+                </i>
+            </p>
+        </div>
+    </div>
+}
+
+@section Styles
+{
+    <partial name="_DataTableStylePartial" />
+}
+
+@section Scripts
+{
+    <partial name="_DataTableScriptPartial" />
+    <script lang="js">
+    var app = {
+        data: {
+            alerts: JSON.parse('@Json.Serialize(Model.Alerts)'),
+            sweetAlert: {
+                text: '@Model.SweetAlert.Text',
+                title: '@Model.SweetAlert.Title',
+                icon: '@Model.SweetAlert.Type',
+                button: "OK"
+            },
+            availableAllocations: JSON.parse('@Json.Serialize(Model.AvailableAllocations)'),
+            stateExpenditure: JSON.parse('@Json.Serialize(Model.StateExpenditure)'),
+            stateExpenditureAllocations: JSON.parse('@Json.Serialize(Model.StateExpenditureAllocations)'),
+            activeStateExpenditureAllocation: {
+                id: "",
+                allocation: {
+                    id: "",
+                    name: ""
+                },
+                allocation_id: "",
+                percentage: 0,
+                total_allocation: 0,
+
+            },
+            postAction: '@StateExpenditureAllocation.AddStateExpenditureAllocationAction',
+        },
+        methods: {
+            toLocale(value) {
+                return window.toLocale(value);
+            },
+            toCurrency(value) {
+                return window.toCurrency(value);
+            },
+            onAlertClose(index) {
+                this.alerts.splice(index,  1);
+            },
+            showAlert(text, title, type) {
+                this.sweetAlert.text = text;
+                this.sweetAlert.title = title;
+                this.sweetAlert.icon = type;
+                showSweetAlert(this.sweetAlert);
+                this.alerts.push({ text, title, type });
+            },
+            /* StateExpenditure Allocation helpers */
+            setActiveStateExpenditureAllocation(stateExpenditureAllocationId) {
+                var emptyStateExpenditureAllocation = {
+                    id: "",
+                    allocation: {
+                        id: "",
+                        name: ""
+                    },
+                    allocation_id: "",
+                    percentage: 0,
+                    total_allocation: 0,
+                };
+                if (!stateExpenditureAllocationId) {
+                    this.activeStateExpenditureAllocation = Object.assign({}, emptyStateExpenditureAllocation);
+                    return;
+                }
+                var stateExpenditureAllocation = this.stateExpenditureAllocations
+                    .find(stateExpenditureAllocation => stateExpenditureAllocation.id === stateExpenditureAllocationId)
+                if (!stateExpenditureAllocation) {
+                    this.activeStateExpenditureAllocation = Object.assign({}, emptyStateExpenditureAllocation);
+                    return;
+                }
+                this.activeStateExpenditureAllocation = Object.assign({}, stateExpenditureAllocation);
+                this.activeStateExpenditureAllocation.percentage =
+                    (parseFloat(stateExpenditureAllocation.percentage) * 100)
+                        .toFixed(2);
+                this.activeStateExpenditureAllocation.total_allocation =
+                    parseFloat(stateExpenditureAllocation.total_allocation);
+            },
+            /* Add StateExpenditure Allocation handlers */
+            onShowAddStateExpenditureAllocationModal(event) {
+                event.preventDefault();
+                this.postAction = '@StateExpenditureAllocation.AddStateExpenditureAllocationAction';
+                this.setActiveStateExpenditureAllocation();
+                $("#upsertStateExpenditureAllocationModal").modal("show");
+            },
+            /* Modify Allocation handlers */
+            onShowModifyStateExpenditureAllocationModal(event, stateExpenditureAllocationId) {
+                event.preventDefault();
+                this.postAction = '@StateExpenditureAllocation.ModifyStateExpenditureAllocationAction';
+                this.setActiveStateExpenditureAllocation(stateExpenditureAllocationId);
+                $("#upsertStateExpenditureAllocationModal").modal("show");
+            },
+            /* Upsert StateExpenditure Allocation handlers */
+            onUpsertStateExpenditureAllocationButtonClicked(event) {
+                event.preventDefault();
+                document.getElementById("upsert-state-expenditure-allocation-form").submit();
+            },
+            /* Remove StateExpenditure Allocation handlers */
+            onShowRemoveStateExpenditureAllocationModal(event, stateExpenditureAllocationId) {
+                event.preventDefault();
+                this.postAction = '@StateExpenditureAllocation.RemoveStateExpenditureAllocationAction';
+                this.setActiveStateExpenditureAllocation(stateExpenditureAllocationId);
+                $("#removeStateExpenditureAllocationModal").modal("show");
+            },
+            onRemoveStateExpenditureAllocationButtonClicked(event) {
+                event.preventDefault();
+                document.getElementById("remove-state-expenditure-allocation-form").submit();
+            },
+        },
+        mounted() {
+            showSweetAlert(this.sweetAlert);
+            $("#stateExpenditureAllocationTable").DataTable();
+        },
+    };
+    </script>
+}
+
+@section Modals
+{
+    <!-- Upsert StateExpenditure Allocation Modal -->
+    <div class="modal fade"
+         id="upsertStateExpenditureAllocationModal"
+         tabindex="-1"
+         role="dialog"
+         aria-labelledby="upsertStateExpenditureAllocationModal"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="upsertStateExpenditureAllocationModalLabel">
+                        {{
+                        postAction == '@StateExpenditureAllocation.AddStateExpenditureAllocationAction' ? "Tambah" : "Ubah"
+                        }} Alokasi
+                    </h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Tutup">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body" v-if="availableAllocations.length > 0 || postAction === '@StateExpenditureAllocation.ModifyStateExpenditureAllocationAction'">
+                    <div class="alert alert-info fade show font-weight-light" role="alert">
+                        <strong>Informasi:</strong><br />
+                        Nilai Total Alokasi dalam triliun Rupiah.
+                    </div>
+                    <form id="upsert-state-expenditure-allocation-form" method="post">
+                        <input type="hidden"
+                               name="action"
+                               v-model="postAction" />
+                        <input type="hidden"
+                               name="id"
+                               v-if="postAction === '@StateExpenditureAllocation.ModifyStateExpenditureAllocationAction'"
+                               v-model="activeStateExpenditureAllocation.id" />
+                        <div class="form-group row">
+                            <label for="allocation_id" class="col-md-4 col-form-label">Alokasi</label>
+                            <div class="col-md-8">
+                                <select class="custom-select"
+                                        id="allocation_id"
+                                        name="allocationId"
+                                        v-model="activeStateExpenditureAllocation.allocation_id">
+                                    <option disabled value="">Silakan pilih Alokasi</option>
+                                    <option v-if="postAction === '@StateExpenditureAllocation.ModifyStateExpenditureAllocationAction'"
+                                            v-bind:value="activeStateExpenditureAllocation.allocation.id">
+                                        {{ activeStateExpenditureAllocation.allocation.name }}
+                                    </option>
+                                    @foreach (var allocation in Model.AvailableAllocations)
+                                    {
+                                        <option value="@allocation.Id">
+                                            @allocation.Name
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="total_allocation" class="col-md-4 col-form-label">
+                                Total Alokasi
+                            </label>
+                            <div class="col-md-8">
+                                <input type="number"
+                                       step="0.000001"
+                                       class="form-control"
+                                       id="total_allocation"
+                                       name="totalAllocation"
+                                       v-model="activeStateExpenditureAllocation.total_allocation" />
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-body" v-else>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="alert alert-info fade show font-weight-light"
+                                 role="alert">
+                                <strong>Informasi:</strong><br />
+                                @if (Model.Allocations.Any())
+                                {
+                                    <span>
+                                        Seluruh Alokasi yang tersedia telah dikaitkan dengan @Model.BudgetName.
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span>
+                                        Tidak ada Alokasi yang tersedia untuk dikaitkan ke @Model.BudgetName.
+                                    </span>
+                                }
+                                <br />
+                                <br />
+                                <em>
+                                    Anda dapat mengatur Alokasi yang tersedia di panel
+                                    <a asp-page="/Dashboard/Budgeting/Allocation">Alokasi</a>.
+                                </em>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary"
+                            type="button"
+                            data-dismiss="modal">
+                        Batal
+                    </button>
+                    <button class="btn btn-warning"
+                            type="button"
+                            v-if="availableAllocations.length > 0 || postAction === '@StateExpenditureAllocation.ModifyStateExpenditureAllocationAction'"
+                            v-on:click="onUpsertStateExpenditureAllocationButtonClicked">
+                        {{ postAction == '@StateExpenditureAllocation.AddStateExpenditureAllocationAction' ? "Tambah" : "Ubah" }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remove StateExpenditure Allocation Modal -->
+    <div class="modal fade"
+         id="removeStateExpenditureAllocationModal"
+         tabindex="-1" role="dialog"
+         aria-labelledby="removeStateExpenditureAllocationModal"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="removeStateExpenditureAllocationModalLabel">
+                        Hapus Alokasi?
+                    </h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Tutup">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="remove-state-expenditure-allocation-form" method="post">
+                        <input type="hidden" name="action" v-model="postAction" />
+                        <input type="hidden" name="id" v-model="activeStateExpenditureAllocation.id" />
+                    </form>
+                    <p>
+                        Anda akan menghapus alokasi berikut dari @(Model.BudgetName).<br />
+                        &nbsp;-&nbsp;Alokasi {{ activeStateExpenditureAllocation.allocation.name }}
+                    </p>
+                    <p class="font-weight-bold">Lanjutkan?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary"
+                            type="button"
+                            data-dismiss="modal">
+                        Batal
+                    </button>
+                    <button class="btn btn-danger"
+                            type="button"
+                            v-on:click="onRemoveStateExpenditureAllocationButtonClicked">
+                        Hapus
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}

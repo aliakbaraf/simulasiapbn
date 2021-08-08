@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <PackageVersion>2.0.0</PackageVersion>
+    <Title>Simulasi APBN: Application</Title>
+    <Authors>Kementerian Keuangan Republik Indonesia</Authors>
+    <Copyright>Hak Cipta © 2020 Kementerian Keuangan Republik Indonesia.</Copyright>
+    <AssemblyVersion>2.0.0</AssemblyVersion>
+    <FileVersion>2.0.0</FileVersion>
+    <NeutralLanguage>en-ID</NeutralLanguage>
+    <LangVersion>9</LangVersion>
+    <Version>2.0.0</Version>
+    <ApplicationIcon>ministry-logo.ico</ApplicationIcon>
+    <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SimulasiAPBN.Core\SimulasiAPBN.Core.csproj" />
+  </ItemGroup>
+</Project>

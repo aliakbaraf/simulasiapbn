@@ -1,0 +1,24 @@
+@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+<!-- Sign Out Modal-->
+<div class="modal fade" id="signOutModal" tabindex="-1" role="dialog" aria-labelledby="SignOut" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="signOutModalLabel">Anda yakin ingin keluar?</h5>
+                <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body">Silakan ketuk tombol <strong>Keluar</strong> untuk mengakhir sesi.</div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" data-dismiss="modal">Batal</button>
+                <a class="btn btn-primary" asp-controller="Gate" asp-action="SignOut">Keluar</a>
+            </div>
+        </div>
+    </div>
+</div>

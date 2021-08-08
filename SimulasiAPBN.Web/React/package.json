@@ -1,0 +1,105 @@
+{
+	"name": "simulasi-apbn-web",
+	"description": "Simulasi APBN",
+	"author": {
+		"name": "Kementerian Keuangan Republik Indonesia",
+		"url": "https://www.kemenkeu.go.id/"
+	},
+	"homepage": "https://simulasiapbn.kemenkeu.go.id/",
+	"version": "2.0.0",
+	"private": true,
+	"dependencies": {
+		"@fortawesome/fontawesome-svg-core": "^1.2.34",
+		"@fortawesome/free-solid-svg-icons": "^5.15.2",
+		"@fortawesome/react-fontawesome": "^0.1.14",
+		"@reduxjs/toolkit": "^1.5.0",
+		"@sentry/browser": "^6.2.0",
+		"@sentry/tracing": "^6.2.0",
+		"@tailwindcss/postcss7-compat": "^2.0.3",
+		"@tailwindcss/typography": "^0.4.0",
+		"axios": "^0.21.1",
+		"craco-image-optimizer-plugin": "^0.0.4",
+		"localforage": "^1.9.0",
+		"merge-props": "^5.0.3",
+		"object-to-formdata": "^4.1.0",
+		"prop-types": "^15.7.2",
+		"qs": "^6.9.6",
+		"react": "^17.0.1",
+		"react-app-polyfill": "^2.0.0",
+		"react-dom": "^17.0.1",
+		"react-gtm-module": "^2.0.11",
+		"react-hot-toast": "^1.0.2",
+		"react-icons": "^4.2.0",
+		"react-player": "^2.9.0",
+		"react-poppop": "^1.5.0",
+		"react-rangeslider": "^2.2.0",
+		"react-redux": "^7.2.2",
+		"react-router-dom": "^5.2.0",
+		"redux-logger": "^3.0.6",
+		"redux-persist": "^6.0.0",
+		"tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.0.3",
+		"vue.js": "^0.3.2",
+		"web-vitals": "^1.1.0"
+	},
+	"devDependencies": {
+		"@craco/craco": "^6.1.1",
+		"@testing-library/jest-dom": "^5.11.9",
+		"@testing-library/react": "^11.2.5",
+		"@testing-library/user-event": "^12.7.3",
+		"@types/eslint": "^7",
+		"@types/jest": "^26.0.20",
+		"@types/node": "^14.14.31",
+		"@types/prop-types": "^15",
+		"@types/qs": "^6.9.5",
+		"@types/react": "^17.0.2",
+		"@types/react-dom": "^17.0.1",
+		"@types/react-gtm-module": "^2.0.0",
+		"@types/react-rangeslider": "^2.2.3",
+		"@types/react-redux": "^7.1.16",
+		"@types/react-router-dom": "^5.1.7",
+		"@types/react-typing-animation": "^1.6.2",
+		"@types/redux-logger": "^3.0.8",
+		"@typescript-eslint/eslint-plugin": "^4.15.2",
+		"@typescript-eslint/parser": "^4.15.2",
+		"autoprefixer": "^9.8.6",
+		"craco-alias": "^2.2.0",
+		"craco-plugin-scoped-css": "^1.1.1",
+		"cross-env": "^7.0.3",
+		"eslint": "^7.20.0",
+		"eslint-plugin-react": "^7.22.0",
+		"postcss": "^7.0.35",
+		"postcss-custom-properties": "^10.0.0",
+		"postcss-import": "^12.0.1",
+		"postcss-nested": "^4.2.3",
+		"prettier": "^2.2.1",
+		"react-scripts": "4.0.3",
+		"typescript": "^4.2.2"
+	},
+	"scripts": {
+		"start": "craco start",
+		"build": "node scripts/pre-build.js && cross-env GENERATE_SOURCEMAP=false craco build",
+		"test": "craco test",
+		"eject": "craco eject",
+		"format": "prettier -w src",
+		"lint": "eslint src",
+		"lint:fix": "eslint src --fix"
+	},
+	"eslintConfig": {
+		"extends": [
+			"react-app",
+			"react-app/jest"
+		]
+	},
+	"browserslist": {
+		"production": [
+			">0.2%",
+			"not dead",
+			"not op_mini all"
+		],
+		"development": [
+			"last 1 chrome version",
+			"last 1 firefox version",
+			"last 1 safari version"
+		]
+	}
+}

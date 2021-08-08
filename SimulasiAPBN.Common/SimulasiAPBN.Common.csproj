@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+        <LangVersion>9</LangVersion>
+        <Nullable>disable</Nullable>
+        <PackageVersion>2.0.0</PackageVersion>
+        <Title>Simulasi APBN: Common</Title>
+        <Authors>Kementerian Keuangan Republik Indonesia</Authors>
+        <Copyright>Hak Cipta © 2020 Kementerian Keuangan Republik Indonesia.</Copyright>
+        <Company>Kementerian Keuangan Republik Indonesia</Company>
+        <AssemblyVersion>2.0.0</AssemblyVersion>
+        <FileVersion>2.0.0</FileVersion>
+        <NeutralLanguage>en-ID</NeutralLanguage>
+        <Version>2.0.0</Version>
+        <ApplicationIcon>ministry-logo.ico</ApplicationIcon>
+        <Platforms>AnyCPU;x64;x86</Platforms>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+      <LangVersion>9</LangVersion>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      <LangVersion>9</LangVersion>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+      <LangVersion>9</LangVersion>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      <LangVersion>9</LangVersion>
+    </PropertyGroup>
+    <ItemGroup>
+      <PackageReference Include="libsodium" Version="1.0.18" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="5.0.0" />
+      <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Information\" />
+    </ItemGroup>
+</Project>

@@ -1,0 +1,244 @@
+@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+@page
+@using SimulasiAPBN.Core.Common
+@model CountryIncome
+
+@{
+    Layout = "_Layout";
+    ViewBag.Title = "Pendapatan Negara";
+}
+
+<!-- FORMATTING DONE -->
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Pendapatan Negara</h1>
+</div>
+
+<partial name="_AlertPartial" />
+
+<!-- Content Row -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Daftar Pendapatan Negara</h6>
+            </div>
+            @if (!Model.StateBudgets.Any())
+            {
+                <div class="card-body">
+                    Belum ada Kebijakan Anggaran Pendapatan dan Belanja Negara yang dicatat.<br />
+                    Silakan tambah kebijakan baru untuk memulai.
+                </div>
+            }
+            else
+            {
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered"
+                               id="countryIncomeTable">
+                            <thead class="text-center">
+                                <tr>
+                                    <th>Kebijakan</th>
+                                    <th>Total Pendapatan</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var stateBudget in Model.StateBudgets)
+                                {
+                                    <tr>
+                                        <td>
+                                            @if (stateBudget == Model.ActiveStateBudget)
+                                            {
+                                                <strong>@Formatter.GetStateBudgetPolicyName(stateBudget)</strong>
+
+                                            }
+                                            else
+                                            {
+                                                @Formatter.GetStateBudgetPolicyName(stateBudget)
+                                            }
+                                        </td>
+                                        <td class="text-center">
+
+                                            @if (stateBudget.CountryIncome <= 0)
+                                            {
+                                                <span>Belum diatur</span>
+                                            }
+                                            else
+                                            {
+                                                <span>{{toCurrency(@stateBudget.CountryIncome)}} T</span>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            <a class="btn btn-outline-primary btn-sm"
+                                               asp-page="EconomicMacro"
+                                               asp-route-StateBudgetId="@stateBudget.Id">
+                                                Atur Ekonomi Makro
+                                            </a>
+                                            <button class="btn btn-outline-primary btn-sm"
+                                                    v-on:click="e => onShowCountryIncomeModal(e, '@stateBudget.Id')">
+                                                Atur Pendapatan Negara
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+@section Styles
+{
+    <partial name="_DataTableStylePartial" />
+}
+
+@section Scripts
+{
+    <partial name="_DataTableScriptPartial" />
+    <script lang="js">
+    var app = {
+       data: {
+            alerts: JSON.parse('@Json.Serialize(Model.Alerts)'),
+            sweetAlert: {
+                text: '@Model.SweetAlert.Text',
+                title: '@Model.SweetAlert.Title',
+                icon: '@Model.SweetAlert.Type',
+                button: "OK"
+            },
+            stateBudgets: JSON.parse('@Json.Serialize(Model.StateBudgets)'),
+            activeStateBudget: {
+            	id: "",
+            	year: "",
+            	revision: "",
+            	country_income: 0
+            },
+            loadingState: false,
+        },
+        methods: {
+            toLocale(value) {
+                return window.toLocale(value);
+            },
+            toCurrency(value) {
+                return window.toCurrency(value);
+            },
+            onAlertClose(index) {
+                this.alerts.splice(index,  1);
+            },
+            showAlert(text, title, type) {
+                this.sweetAlert.text = text;
+                this.sweetAlert.title = title;
+                this.sweetAlert.icon = type;
+                showSweetAlert(this.sweetAlert);
+                this.alerts.push({ text, title, type });
+            },
+            setActiveStateBudget(stateBudgetId) {
+                var emptyStateBudget = {
+                    id: "",
+                    year: "",
+                    revision: "",
+                    country_income: 0
+                };
+                if (!stateBudgetId) {
+                    this.activeStateBudget = Object.assign({}, emptyStateBudget);
+                    return;
+                }
+                var stateBudget = this.stateBudgets.find(entity => entity.id === stateBudgetId);
+                if (!stateBudget) {
+                    this.activeStateBudget = Object.assign({}, emptyStateBudget);
+                    return;
+                }
+                this.activeStateBudget = Object.assign({}, stateBudget);
+                this.activeStateBudget.country_income = parseFloat(stateBudget.country_income);
+            },
+            onShowCountryIncomeModal(event, stateBudgetId) {
+            	event.preventDefault();
+            	this.setActiveStateBudget(stateBudgetId);
+                $("#countryIncomeModal").modal("show");
+
+            },
+            onSaveCountryIncomeButtonClicked(event) {
+            	event.preventDefault();
+            	this.loadingState = true;
+                document.getElementById("country-income-form").submit();
+            },
+        },
+        mounted() {
+            showSweetAlert(this.sweetAlert);
+            @if (Model.StateBudgets.Any())
+            {
+                @Html.Raw("$('#countryIncomeTable').DataTable();")
+            }
+        },
+    };
+    </script>
+}
+
+@section Modals
+{
+    <!-- Country Income Modal -->
+    <div class="modal fade"
+         id="countryIncomeModal"
+         tabindex="-1"
+         role="dialog"
+         aria-labelledby="countryIncomeModal"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="countryIncomeModalLabel">
+                        Pendapatan Negara
+                    </h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Tutup">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info fade show font-weight-light" role="alert">
+                        <strong>Informasi:</strong><br />
+                        Nilai Pendapatan Negara dalam triliun Rupiah.
+                    </div>
+                    <form id="country-income-form" method="post">
+                        <input type="hidden" name="id" v-model="activeStateBudget.id">
+                        <div class="form-group row">
+                            <label for="country_income" class="col-md-4 col-form-label">
+                                Pendapatan Negara
+                            </label>
+                            <div class="col-md-8">
+                                <input type="number"
+                                       step="0.000001"
+                                       class="form-control"
+                                       id="country_income"
+                                       name="countryIncome"
+                                       v-bind:readonly="loadingState"
+                                       v-model="activeStateBudget.country_income" />
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary"
+                            type="button"
+                            v-bind:disabled="loadingState"
+                            data-dismiss="modal">
+                        Batal
+                    </button>
+                    <button class="btn btn-warning"
+                            type="button"
+                            v-bind:disabled="loadingState"
+                            v-on:click="onSaveCountryIncomeButtonClicked">
+                        <i class="fas fa-spinner fa-spin" v-if="loadingState"></i>
+                        <span v-else>Simpan</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}

@@ -1,0 +1,159 @@
+@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+@page
+@using SimulasiAPBN.Core.Common
+@model BudgetDetail
+
+@{
+    Layout = "_Layout";
+    ViewBag.Title = $"Detil {Model.BudgetName}";
+}
+
+<!-- Page Heading -->
+<div class="d-sm-flex mb-4">
+    <a class="btn btn-sm" asp-page="Budget">
+        <i class="fas fa-fw fa-arrow-left"></i>&nbsp;
+    </a>&nbsp;
+    <h1 class="h3 mb-0 text-gray-800">Detil @Model.BudgetName</h1>
+    <button class="btn btn-primary btn-sm ml-auto" v-on:click="onSaveButtonClicked">
+        <i class="fas fa-save fa-fw"></i>&nbsp;
+        <i class="fas fa-spinner fa-spin" v-if="loadingState"></i>
+        Simpan
+    </button>
+</div>
+
+<partial name="_AlertPartial" />
+
+<!-- Content Row -->
+<div class="row">
+    <form method="post" id="budget-detail-form" class="col-12">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-sm-flex align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        Informasi
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="form-group row">
+                        <label for="type" class="col-12 col-md-4 col-lg-3 col-form-label">
+                            Jenis
+                        </label>
+                        <div class="col-12 col-md-8 col-lg-9">
+                            <input type="text"
+                                   class="form-control-plaintext"
+                                   id="type"
+                                   disabled
+                                   value="@Formatter.GetBudgetTypeName(Model.Budget.Type)" />
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="@BudgetDetail.BudgetDescriptionIdentifier" class="col-12 col-md-4 col-lg-3 col-form-label">
+                            Deskripsi
+                        </label>
+                        <div class="col-12 col-md-8 col-lg-9">
+                            <textarea id="@BudgetDetail.BudgetDescriptionIdentifier" name="@BudgetDetail.BudgetDescriptionIdentifier" class="form-control" v-bind:readonly="loadingState" rows="4">@Model.Budget.Description</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-sm-flex align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        Sasaran
+                    </h6>
+                    <button class="btn btn-primary btn-sm ml-auto"
+                            v-bind:disabled="loadingState"
+                            v-on:click="onAddBudgetTargetButtonClicked">
+                        <i class="fas fa-plus fa-fw"></i>&nbsp;
+                        <span v-if="!loadingState">Tambah</span>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div v-if="!budgetTargets || budgetTargets.length <= 0"
+                         class="alert alert-primary fade show font-weight-light"
+                         role="alert">
+                        <strong>Informasi:</strong><br />
+                        Sasaran Anggaran ini belum diatur. Silakan tambahkan sasaran anggaran.
+                    </div>
+                    <div v-else v-for="(budgetTarget, index) in budgetTargets" class="form-group row">
+                        <label v-bind:for="index" class="col-1 col-form-label text-center">
+                            {{ index + 1 }}
+                        </label>
+                        <div class="col-10">
+                            <textarea v-bind:id="index" v-bind:name="index" v-bind:readonly="loadingState" class="form-control" rows="2">{{
+                            budgetTarget.description 
+                            }}</textarea>
+                        </div>
+                        <div>
+                            <button class="btn btn-outline-danger btn-sm"
+                                    v-bind:disabled="loadingState"
+                                    v-on:click="e => onRemoveBudgetTargetButtonClicked(e, index)">
+                                <i class="fas fa-trash fa-fw"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts
+{
+    <script lang="js">
+    var app = {
+        data: {
+            alerts: JSON.parse('@Json.Serialize(Model.Alerts)'),
+            sweetAlert: {
+                text: '@Model.SweetAlert.Text',
+                title: '@Model.SweetAlert.Title',
+                icon: '@Model.SweetAlert.Type',
+                button: "OK"
+            },
+            description: '@Model.Budget.Description',
+            budgetTargets: JSON.parse('@Json.Serialize(Model.Budget.BudgetTargets)'),
+            loadingState: false,
+        },
+        methods: {
+            onAlertClose(index) {
+                this.alerts.splice(index,  1);
+            },
+            showAlert(text, title, type) {
+                this.sweetAlert.text = text;
+                this.sweetAlert.title = title;
+                this.sweetAlert.icon = type;
+                showSweetAlert(this.sweetAlert);
+                this.alerts.push({ text, title, type });
+            },
+            onAddBudgetTargetButtonClicked(event) {
+            	event.preventDefault();
+            	var emptyBudgetTarget = {
+            		description: ""
+            	};
+            	this.budgetTargets.push(emptyBudgetTarget);
+            },
+            onRemoveBudgetTargetButtonClicked(event, index) {
+            	event.preventDefault();
+            	if (typeof index === "undefined" || index === null) {
+            		return;
+            	}
+            	this.budgetTargets.splice(index,  1);
+            },
+            onSaveButtonClicked(event) {
+            	event.preventDefault();
+                document.getElementById("budget-detail-form").submit();
+            },
+        },
+        mounted() {
+            showSweetAlert(this.sweetAlert);
+        },
+    };
+    </script>
+}

@@ -1,0 +1,372 @@
+@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+@page
+@using SimulasiAPBN.Core.Common
+@model StateBudget
+
+@{
+    Layout = "_Layout";
+    ViewBag.Title = "Anggaran Pendapatan dan Belanja Negara";
+}
+
+<!-- FORMATTING DONE -->
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Anggaran Pendapatan dan Belanja Negara</h1>
+    <button class="btn btn-warning btn-sm" v-on:click="onShowAddPolicyModal">
+        <i class="fas fa-plus fa-fw"></i>&nbsp;
+        Kebijakan Baru
+    </button>
+</div>
+
+<partial name="_AlertPartial" />
+
+<!-- Content Row -->
+<div class="row">
+    <div class="col-12">
+        @if (Model.StateBudgets.Any())
+        {
+            <p>
+                Kebijakan Berlaku: <strong>@Model.ActiveStateBudgetName</strong>
+            </p>
+        }
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Daftar Kebijakan</h6>
+            </div>
+            @if (!Model.StateBudgets.Any())
+            {
+                <div class="card-body">
+                    Belum ada Kebijakan Anggaran Pendapatan dan Belanja Negara yang dicatat.<br />
+                    Silakan tambah kebijakan baru untuk memulai.
+                </div>
+            }
+            else
+            {
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered"
+                               id="policyTable">
+                            <thead class="text-center">
+                                <tr>
+                                    <th>Nama Kebijakan</th>
+                                    <th>Status</th>
+                                    <th>Pendapatan</th>
+                                    <th>Belanja</th>
+                                    <th>Keseimbangan</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var stateBudget in Model.StateBudgets)
+                                {
+                                    var countryIncome = stateBudget.CountryIncome;
+                                    var stateExpenditures = stateBudget.StateExpenditures
+                                        .Sum(expenditure => expenditure.TotalAllocation);
+                                    var balanceText = "Seimbang";
+                                    var balancePercentage = 0m;
+                                    if (countryIncome < stateExpenditures)
+                                    {
+                                        balanceText = "Defisit";
+                                        balancePercentage = (stateExpenditures - countryIncome) / Model.GrossDomesticProduct * 100;
+                                    }
+                                    else if (countryIncome > stateExpenditures)
+                                    {
+                                        balanceText = "Surplus";
+                                        balancePercentage = (countryIncome - stateExpenditures) / Model.GrossDomesticProduct * 100;
+                                    }
+                                    <tr>
+                                        <td>
+                                            @if (Model.ActiveStateBudget is not null && stateBudget.Id == Model.ActiveStateBudget.Id)
+                                            {
+                                                <strong>@Formatter.GetStateBudgetPolicyName(stateBudget)</strong>
+                                            }
+                                            else
+                                            {
+                                                @Formatter.GetStateBudgetPolicyName(stateBudget)
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            @if (Model.ActiveStateBudget is not null && stateBudget.Id == Model.ActiveStateBudget.Id)
+                                            {
+                                                <strong>Berlaku</strong>
+                                            }
+                                            else if (Model.LatestStateBudget is not null && stateBudget.Id == Model.LatestStateBudget.Id)
+                                            {
+                                                <strong>Terbaru</strong>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            @if (countryIncome <= 0)
+                                            {
+                                                <span>Belum diatur</span>
+                                            }
+                                            else
+                                            {
+                                                <span>{{toCurrency(@countryIncome)}} T</span>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            @if (stateExpenditures <= 0)
+                                            {
+                                                <span>Belum diatur</span>
+                                            }
+                                            else
+                                            {
+                                                <span>{{toCurrency(@stateExpenditures)}} T</span>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            @balanceText
+                                            @if (balancePercentage != 0)
+                                            {
+                                                <span>{{toLocale(@balancePercentage)}}% PDB</span>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            <button class="btn btn-sm btn-danger"
+                                                    v-on:click="e => onShowRemovePolicyModal(e, '@stateBudget.Id')">
+                                                Hapus
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Styles
+{
+    <partial name="_DataTableStylePartial" />
+}
+
+@section Scripts
+{
+    <partial name="_DataTableScriptPartial" />
+    <script lang="js">
+    var app = {
+        data: {
+            alerts: JSON.parse('@Json.Serialize(Model.Alerts)'),
+            sweetAlert: {
+                text: '@Model.SweetAlert.Text',
+                title: '@Model.SweetAlert.Title',
+                icon: '@Model.SweetAlert.Type',
+                button: "OK"
+            },
+            availableStateBudgets: JSON.parse('@Json.Serialize(Model.AvailableStateBudgets)'),
+            stateBudgets: [],
+            activeStateBudget: {
+                id: "",
+                year: 0,
+                revision: 0
+            },
+            postAction: '@StateBudget.AddStateBudgetAction'
+        },
+        methods: {
+            toLocale(value) {
+                return window.toLocale(value);
+            },
+            toCurrency(value) {
+                return window.toCurrency(value);
+            },
+            onAlertClose(index) {
+                this.alerts.splice(index,  1);
+            },
+            showAlert(text, title, type) {
+                this.sweetAlert.text = text;
+                this.sweetAlert.title = title;
+                this.sweetAlert.icon = type;
+                showSweetAlert(this.sweetAlert);
+                this.alerts.push({ text, title, type });
+            },
+            getPolicyName(year, revision) {
+                return `APBN Tahun ${year}${revision > 0 ? " Perubahan Ke-" + revision : ""}`;
+            },
+            /* Add State Budget Handlers */
+            onShowAddPolicyModal(event) {
+                event.preventDefault();
+                this.postAction = '@StateBudget.AddStateBudgetAction';
+                this.activeStateBudget.year = this.availableStateBudgets[0].year;
+                this.activeStateBudget.revision = this.availableStateBudgets[0].revision;
+                $("#addPolicyModal").modal("show");
+            },
+            onAddPolicyYearChanged(event) {
+                event.preventDefault();
+                var stateBudget = this.availableStateBudgets
+                    .find(policy => policy.year === this.activeStateBudget.year);
+                if (typeof stateBudget !== "undefined" && stateBudget !== null) {
+                    this.activeStateBudget.revision = stateBudget.revision;
+                }
+            },
+            onAddPolicyButtonClicked(event) {
+                event.preventDefault();
+                document.getElementById("add-policy-form").submit();
+            },
+            /* Remove State Budget Handlers */
+            onShowRemovePolicyModal(event, stateBudgetId) {
+                event.preventDefault();
+                this.postAction = '@StateBudget.RemoveStateBudgetAction';
+                this.activeStateBudget = this.stateBudgets
+                    .find(policy => policy.id === stateBudgetId);
+                $("#removePolicyModal").modal("show");
+            },
+            onRemovePolicyButtonClicked(event) {
+                event.preventDefault();
+                document.getElementById("remove-policy-form").submit();
+            }
+        },
+        mounted() {
+            showSweetAlert(this.sweetAlert);
+            $("#policyTable").DataTable();
+
+            engine.get("/engine/dashboard/statebudgets")
+                .then(response => response.data)
+                .then(response => {
+                	if (!response.success) {
+                		var errorReason = response.error
+                		    ? response.error.reason
+                		    : "Gagal mengambil data dari server.";
+                        this.showAlert(errorReason, "Terjadi Kesalahan!", "danger");
+                		return;
+                	}
+
+                	this.stateBudgets = response.data;
+                })
+                .catch(error => {
+                    this.showAlert(`${error}`, "Terjadi Kesalahan!", "danger");
+                });
+        }
+    };
+    </script>
+}
+
+@section Modals
+{
+    <!-- Add State Budget Modal -->
+    <div class="modal fade"
+         id="addPolicyModal"
+         tabindex="-1"
+         role="dialog"
+         aria-labelledby="addPolicyModal"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addPolicyModalLabel">
+                        Kebijakan APBN Baru
+                    </h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Tutup">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info fade show font-weight-light" role="alert">
+                        <strong>Informasi:</strong><br />
+                        Anda hanya dapat menambahkan kebijakan APBN baru untuk tahun berjalan hingga 2 tahun sebelumnya.
+                    </div>
+                    <form id="add-policy-form" method="post">
+                        <input type="hidden" name="action" v-model="postAction" />
+                        <div class="form-group row">
+                            <label for="year" class="col-md-4 col-form-label">Tahun</label>
+                            <div class="col-md-8">
+                                <select class="custom-select"
+                                        id="year"
+                                        name="year"
+                                        v-on:change="onAddPolicyYearChanged"
+                                        v-model="activeStateBudget.year">
+                                    @foreach (var stateBudget in Model.AvailableStateBudgets)
+                                    {
+                                        <option v-bind:value="@stateBudget.Year">
+                                            @stateBudget.Year
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group row" v-if="activeStateBudget.revision > 0">
+                            <label for="revision" class="col-md-4 col-form-label">Perubahan Ke</label>
+                            <div class="col-md-8">
+                                <input type="text"
+                                       readonly
+                                       class="form-control"
+                                       id="revision"
+                                       v-model="activeStateBudget.revision" />
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary"
+                            type="button"
+                            data-dismiss="modal">
+                        Batal
+                    </button>
+                    <button class="btn btn-warning"
+                            type="button"
+                            v-on:click="onAddPolicyButtonClicked">
+                        Tambah
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remove State Budget Modal -->
+    <div class="modal fade"
+         id="removePolicyModal"
+         tabindex="-1" role="dialog"
+         aria-labelledby="removePolicyModal"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="removePolicyModalLabel">
+                        Hapus Kebijakan?
+                    </h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Tutup">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="remove-policy-form" method="post">
+                        <input type="hidden" name="action" v-model="postAction" />
+                        <input type="hidden" name="id" v-model="activeStateBudget.id" />
+                    </form>
+                    <p>
+                        Anda akan menghapus kebijakan berikut.<br />
+                        &nbsp;-&nbsp;{{ getPolicyName(activeStateBudget.year, activeStateBudget.revision) }}
+                    </p>
+                    <p v-if="activeStateBudget.id === '@(Model.ActiveStateBudget?.Id ?? Guid.Empty)'">
+                        <strong>Perhatian!</strong><br />
+                        <em>
+                            Anda akan menghapus kebijakan APBN yang sedang berlaku. Apabila ada, APBN perubahan
+                            sebelumnya, atau APBN pada tahun sebelumnya akan otomatis berlaku.
+                        </em>
+                    </p>
+                    <p class="font-weight-bold">Lanjutkan?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary"
+                            type="button"
+                            data-dismiss="modal">
+                        Batal
+                    </button>
+                    <button class="btn btn-danger"
+                            type="button"
+                            v-on:click="onRemovePolicyButtonClicked">
+                        Hapus
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}

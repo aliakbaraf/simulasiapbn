@@ -1,0 +1,19 @@
+﻿# Ignore everything
+*
+
+# But not these files...
+!.gitignore
+!introduction.mp4
+!application-logo.png
+!loading.gif
+!ministry-logo.png
+!ministry-logo-with-title.png
+!facebook-share-button.png
+!facebook-share-button-hover.png
+!new-session-button.png
+!new-session-button-hover.png
+!twitter-share-button.png
+!twitter-share-button-hover.png
+!open-graph-card.jpg
+!twitter-card.jpg
+

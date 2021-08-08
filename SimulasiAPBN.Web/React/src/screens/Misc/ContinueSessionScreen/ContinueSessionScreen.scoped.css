@@ -1,0 +1,34 @@
+/**
+ * Simulasi APBN
+ *
+ * Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+ * untuk Kementerian Keuangan Republik Indonesia.
+ */
+.screen {
+	@apply flex flex-col justify-center items-center p-6;
+	min-height: calc(100vh - 4rem);
+}
+
+.content {
+	@apply text-center;
+
+	.greeting {
+		@apply font-semibold;
+	}
+
+	.description {
+		@apply mb-4;
+	}
+
+	.prompt {
+		@apply font-bold text-primary dark:text-secondary;
+	}
+}
+
+.click-to-action {
+	@apply flex flex-wrap justify-center items-center mt-8;
+
+	Button {
+		@apply m-2;
+	}
+}

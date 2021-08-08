@@ -1,0 +1,420 @@
+﻿@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+@page
+@model SpecialPolicyAllocation
+
+@{
+    Layout = "_Layout";
+    ViewBag.Title = $"Alokasi { Model.SpecialPolicyName }";
+}
+
+<!-- Page Heading -->
+<div class="d-sm-flex mb-4">
+    <a class="btn btn-sm" asp-page="SpecialPolicy" asp-route-StateBudgetId="@Model.SpecialPolicy.StateBudgetId">
+        <i class="fas fa-fw fa-arrow-left"></i>&nbsp;
+    </a>&nbsp;
+    <h1 class="h3 mb-0 text-gray-800">Alokasi @Model.SpecialPolicyName</h1>
+    @if (Model.SpecialPolicy is not null)
+    {
+        <button class="btn btn-warning btn-sm ml-auto" v-on:click="onShowAddSpecialPolicyAllocationModal">
+            <i class="fas fa-plus fa-fw"></i>&nbsp;
+            Tambah Alokasi
+        </button>
+    }
+</div>
+
+<partial name="_AlertPartial" />
+
+<!-- Content Row -->
+<div class="row">
+    <div class="col-12">
+        <table class="mb-2">
+            @{
+                var usedPercentage = (Model.UsedAllocationValue / Model.SpecialPolicy.TotalAllocation) * 100;
+                var availablePercentage = (Model.AvailableAllocationValue / Model.SpecialPolicy.TotalAllocation) * 100;
+            }
+            <tr>
+                <td class="p-1">Status Kebijakan</td>
+                <td class="p-1">:</td>
+                <td class="p-1">@(Model.SpecialPolicy.IsActive ? "Aktif" : "Tidak Aktif")</td>
+            </tr>
+            <tr>
+                <td class="p-1">Nilai Total Alokasi</td>
+                <td class="p-1">:</td>
+                <td class="p-1"><strong>{{toCurrency(@Model.SpecialPolicy.TotalAllocation)}} T</strong></td>
+            </tr>
+            <tr>
+                <td class="p-1">Telah Dialokasikan</td>
+                <td class="p-1">:</td>
+                <td class="p-1">{{toCurrency(@Model.UsedAllocationValue)}} T ({{toLocale(@usedPercentage)}}% total alokasi)</td>
+            </tr>
+            <tr>
+                <td class="p-1">Belum Dialokasikan</td>
+                <td class="p-1">:</td>
+                <td class="p-1">{{toCurrency(@Model.AvailableAllocationValue)}} T ({{toLocale(@availablePercentage)}}% total alokasi)</td>
+            </tr>
+        </table>
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-sm-flex align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Daftar Alokasi</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-bordered"
+                       id="specialPolicyAllocationTable">
+                    <thead class="text-center">
+                        <tr>
+                            <th>Nama</th>
+                            <th>Total Alokasi</th>
+                            <th>Simulasi Maksimum</th>
+                            <th>Persentase</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var specialPolicyAllocation in Model.SpecialPolicy.SpecialPolicyAllocations)
+                        {
+                            <tr>
+                                <td>@specialPolicyAllocation.Allocation.Name</td>
+                                <td class="text-center">
+                                    {{toCurrency(@specialPolicyAllocation.TotalAllocation)}} T
+                                </td>
+                                <td class="text-center">
+                                    {{toLocale(@specialPolicyAllocation.SimulationMaximumMultiplier)}} x Alokasi
+                                </td>
+                                <td class="text-center">
+                                    {{toLocale(@specialPolicyAllocation.Percentage)}}% dari Anggaran
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-outline-primary"
+                                            v-on:click="e => onShowModifySpecialPolicyAllocationModal(e, '@specialPolicyAllocation.Id')">
+                                        Ubah
+                                    </button>&nbsp;
+                                    <button class="btn btn-sm btn-danger"
+                                            v-on:click="e => onShowRemoveSpecialPolicyAllocationModal(e, '@specialPolicyAllocation.Id')">
+                                        Hapus
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Styles
+{
+    <partial name="_DataTableStylePartial" />
+}
+
+@section Scripts
+{
+    <partial name="_DataTableScriptPartial" />
+    <script lang="js">
+    var app = {
+        data: {
+            alerts: JSON.parse('@Json.Serialize(Model.Alerts)'),
+            sweetAlert: {
+                text: '@Model.SweetAlert.Text',
+                title: '@Model.SweetAlert.Title',
+                icon: '@Model.SweetAlert.Type',
+                button: "OK"
+            },
+            availableAllocations: JSON.parse('@Json.Serialize(Model.AvailableAllocations)'),
+            specialPolicy: JSON.parse('@Json.Serialize(Model.SpecialPolicy)'),
+            activeAllocations: [],
+            activeSpecialPolicyAllocation: {
+                id: "",
+                allocation: {
+                	id: "",
+                	name: ""
+                },
+                allocation_id: "",
+                total_allocation: 0,
+                simulation_maximum_multiplier: 0,
+                percentage: 0,
+            },
+            postAction: '@SpecialPolicy.AddSpecialPolicyAction',
+        },
+        methods: {
+            toLocale(value) {
+                return window.toLocale(value);
+            },
+            toCurrency(value) {
+                return window.toCurrency(value);
+            },
+            onAlertClose(index) {
+                this.alerts.splice(index,  1);
+            },
+            showAlert(text, title, type) {
+                this.sweetAlert.text = text;
+                this.sweetAlert.title = title;
+                this.sweetAlert.icon = type;
+                showSweetAlert(this.sweetAlert);
+                this.alerts.push({ text, title, type });
+            },
+            /* Special Policy Allocation helpers */
+            setActiveSpecialPolicyAllocation(specialPolicyAllocationId) {
+                var emptySpecialPolicyAllocation = {
+                    id: "",
+                    allocation: {
+                	    id: "",
+                	    name: ""
+                    },
+                    allocation_id: "",
+                    total_allocation: 0,
+                    simulation_maximum_multiplier: 0,
+                    percentage: 0,
+                };
+                if (!specialPolicyAllocationId) {
+                    this.activeSpecialPolicyAllocation = Object.assign({}, emptySpecialPolicyAllocation);
+                    return;
+                }
+                var specialPolicyAllocation = this.specialPolicy.special_policy_allocations
+                    .find(specialPolicyAllocation => specialPolicyAllocation.id === specialPolicyAllocationId)
+                if (!specialPolicyAllocation) {
+                    this.activeSpecialPolicyAllocation = Object.assign({}, emptySpecialPolicyAllocation);
+                    return;
+                }
+                this.activeSpecialPolicyAllocation = Object.assign({}, specialPolicyAllocation);
+                this.activeSpecialPolicyAllocation.percentage =
+                    (parseFloat(specialPolicyAllocation.percentage) * 100)
+                        .toFixed(2);
+                this.activeSpecialPolicyAllocation.simulation_maximum_multiplier =
+                    (parseFloat(specialPolicyAllocation.simulation_maximum_multiplier) * 100)
+                        .toFixed(2);
+                this.activeSpecialPolicyAllocation.total_allocation =
+                    parseFloat(specialPolicyAllocation.total_allocation);
+            },
+            /* Add Special Policy Allocation handlers */
+            onShowAddSpecialPolicyAllocationModal(event) {
+                event.preventDefault();
+                this.postAction = '@SpecialPolicyAllocation.AddSpecialPolicyAllocationAction';
+                this.setActiveSpecialPolicyAllocation();
+                $("#upsertSpecialPolicyAllocationModal").modal("show");
+            },
+            /* Modify Special Policy handlers */
+            onShowModifySpecialPolicyAllocationModal(event, specialPolicyAllocationId) {
+                event.preventDefault();
+                this.postAction = '@SpecialPolicyAllocation.ModifySpecialPolicyAllocationAction';
+                this.setActiveSpecialPolicyAllocation(specialPolicyAllocationId);
+                $("#upsertSpecialPolicyAllocationModal").modal("show");
+            },
+            /* Upsert Special Policy Allocation handlers */
+            onUpsertSpecialPolicyAllocationButtonClicked(event) {
+                event.preventDefault();
+                document.getElementById("upsert-special-policy-allocation-form").submit();
+            },
+            /* Remove Special Policy Allocation handlers */
+            onShowRemoveSpecialPolicyAllocationModal(event, specialPolicyAllocationId) {
+                event.preventDefault();
+                this.postAction = '@SpecialPolicyAllocation.RemoveSpecialPolicyAllocationAction';
+                this.setActiveSpecialPolicyAllocation(specialPolicyAllocationId);
+                $("#removeSpecialPolicyAllocationModal").modal("show");
+            },
+            onRemoveSpecialPolicyAllocationButtonClicked(event) {
+                event.preventDefault();
+                document.getElementById("remove-special-policy-allocation-form").submit();
+            },
+        },
+        mounted() {
+            showSweetAlert(this.sweetAlert);
+            $("#specialPolicyAllocationTable").DataTable();
+        },
+    };
+    </script>
+}
+
+@section Modals
+{
+    <!-- Upsert SpecialPolicy Allocation Modal -->
+    <div class="modal fade"
+         id="upsertSpecialPolicyAllocationModal"
+         tabindex="-1"
+         role="dialog"
+         aria-labelledby="upsertSpecialPolicyAllocationModal"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="upsertSpecialPolicyAllocationModalLabel">
+                        {{
+                        postAction == '@SpecialPolicyAllocation.AddSpecialPolicyAllocationAction' ? "Tambah" : "Ubah"
+                        }} Alokasi
+                    </h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Tutup">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body" v-if="availableAllocations.length > 0 || postAction === '@SpecialPolicyAllocation.ModifySpecialPolicyAllocationAction'">
+                    <div class="alert alert-info fade show font-weight-light" role="alert">
+                        <strong>Informasi:</strong><br />
+                        Nilai Total Alokasi dalam triliun Rupiah.
+                    </div>
+                    <div class="alert alert-info fade show font-weight-light" role="alert">
+                        <strong>Informasi:</strong><br />
+                        Simulasi Maksimum adalah nilai maksimum alokasi anggaran yang dapat diatur pengguna
+                        di dalam permainan simulasi dibandingkan nilai alokasi anggaran yang sebenarnya.
+                    </div>
+                    <form id="upsert-special-policy-allocation-form" method="post">
+                        <input type="hidden"
+                               name="action"
+                               v-model="postAction" />
+                        <input type="hidden"
+                               name="id"
+                               v-if="postAction === '@SpecialPolicyAllocation.ModifySpecialPolicyAllocationAction'"
+                               v-model="activeSpecialPolicyAllocation.id" />
+                        <div class="form-group row">
+                            <label for="allocation_id" class="col-md-4 col-form-label">Alokasi</label>
+                            <div class="col-md-8">
+                                <select class="custom-select"
+                                        id="allocation_id"
+                                        name="allocationId"
+                                        v-model="activeSpecialPolicyAllocation.allocation_id">
+                                    <option disabled value="">Silakan pilih Alokasi</option>
+                                    <option v-if="postAction === '@SpecialPolicyAllocation.ModifySpecialPolicyAllocationAction'"
+                                            v-bind:value="activeSpecialPolicyAllocation.allocation.id">
+                                        {{ activeSpecialPolicyAllocation.allocation.name }}
+                                    </option>
+                                    @foreach (var allocation in Model.AvailableAllocations)
+                                    {
+                                        <option value="@allocation.Id">
+                                            @allocation.Name
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="total_allocation" class="col-md-4 col-form-label">
+                                Total Alokasi
+                            </label>
+                            <div class="col-md-8">
+                                <input type="number"
+                                       step="0.000001"
+                                       class="form-control"
+                                       id="total_allocation"
+                                       name="totalAllocation"
+                                       v-model="activeSpecialPolicyAllocation.total_allocation" />
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <label for="simulation_maximum_multiplier" class="col-md-6 col-12 col-form-label">
+                                Simulasi Maksimum (%)
+                            </label>
+                            <div class="col-md-4 col-9">
+                                <input type="range"
+                                       class="form-control"
+                                       min="100"
+                                       max="1000"
+                                       step="0.01"
+                                       id="simulation_maximum_multiplier"
+                                       name="simulationMaximumMultiplier"
+                                       v-model="activeSpecialPolicyAllocation.simulation_maximum_multiplier" />
+                            </div>
+                            <div class="col-md-2 col-3">
+                                <input type="number"
+                                       min="100"
+                                       max="1000"
+                                       step="0.01"
+                                       class="form-control-plaintext"
+                                       v-model="activeSpecialPolicyAllocation.simulation_maximum_multiplier" />
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-body" v-else>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="alert alert-info fade show font-weight-light"
+                                 role="alert">
+                                <strong>Informasi:</strong><br />
+                                @if (Model.Allocations.Any())
+                                {
+                                    <span>
+                                        Seluruh Alokasi yang tersedia telah dikaitkan dengan @Model.SpecialPolicyName.
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span>
+                                        Tidak ada Alokasi yang tersedia untuk dikaitkan ke @Model.SpecialPolicyName.
+                                    </span>
+                                }
+                                <br />
+                                <br />
+                                <em>
+                                    Anda dapat mengatur Alokasi yang tersedia di panel
+                                    <a asp-page="/Dashboard/Budgeting/Allocation">Alokasi</a>.
+                                </em>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary"
+                            type="button"
+                            data-dismiss="modal">
+                        Batal
+                    </button>
+                    <button class="btn btn-warning"
+                            type="button"
+                            v-if="availableAllocations.length > 0 || postAction === '@SpecialPolicyAllocation.ModifySpecialPolicyAllocationAction'"
+                            v-on:click="onUpsertSpecialPolicyAllocationButtonClicked">
+                        {{ postAction == '@SpecialPolicyAllocation.AddSpecialPolicyAllocationAction' ? "Tambah" : "Ubah" }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remove SpecialPolicy Allocation Modal -->
+    <div class="modal fade"
+         id="removeSpecialPolicyAllocationModal"
+         tabindex="-1" role="dialog"
+         aria-labelledby="removeSpecialPolicyAllocationModal"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="removeSpecialPolicyAllocationModalLabel">
+                        Hapus Alokasi?
+                    </h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Tutup">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="remove-special-policy-allocation-form" method="post">
+                        <input type="hidden" name="action" v-model="postAction" />
+                        <input type="hidden" name="id" v-model="activeSpecialPolicyAllocation.id" />
+                    </form>
+                    <p>
+                        Anda akan menghapus alokasi berikut dari @(Model.SpecialPolicyName).<br />
+                        &nbsp;-&nbsp;Alokasi {{ activeSpecialPolicyAllocation.allocation.name }}
+                    </p>
+                    <p class="font-weight-bold">Lanjutkan?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary"
+                            type="button"
+                            data-dismiss="modal">
+                        Batal
+                    </button>
+                    <button class="btn btn-danger"
+                            type="button"
+                            v-on:click="onRemoveSpecialPolicyAllocationButtonClicked">
+                        Hapus
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}

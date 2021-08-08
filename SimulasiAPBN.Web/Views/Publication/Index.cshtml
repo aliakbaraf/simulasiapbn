@@ -1,0 +1,171 @@
+﻿@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+@using System.Net
+@using SimulasiAPBN.Core.Common
+@using SimulasiAPBN.Core.Models
+@{
+    string baseUrl = ViewBag.BaseUrl;
+    bool isSurplus = ViewBag.IsSurplus;
+    SimulationSession session = ViewBag.Session;
+    string title = ViewBag.Title;
+    decimal totalExpenditure = ViewBag.TotalExpenditure;
+    decimal totalIncome = session.UsedIncome;
+    //decimal totalIncome = ViewBag.TotalIncome;
+
+    var change = totalIncome - totalExpenditure;
+    var positiveChange = change < 0 ? change * -1 : change;
+    var name = session?.Name ?? "Pengguna";
+    var sessionId = session?.Id ?? Guid.Empty;
+    var stateBudgetName = Formatter.GetStateBudgetPolicyName(session.StateBudget);
+    if (string.IsNullOrEmpty(stateBudgetName))
+    {
+        stateBudgetName = "APBMN";
+    }
+
+    var shareUrl = $"{baseUrl}/publication?sessionId={sessionId}";
+
+    var facebookUrl = $"https://www.facebook.com/sharer/sharer.php" +
+                $"?kid_directed_site=0" +
+                $"&sdk=joey" +
+                $"&display=popup" +
+                $"&ref=plugin" +
+                $"&src=share_button";
+    var facebookShareUrl = $"{facebookUrl}&u={WebUtility.UrlEncode(shareUrl)}";
+
+    var twitterUrl = $"https://twitter.com/intent/tweet" +
+                $"?hashtags={WebUtility.UrlEncode("UangKita")}" +
+                $"&original_referer={WebUtility.UrlEncode(baseUrl)}" +
+                $"&ref_src=twsrc%5Etfw" +
+                $"&related={WebUtility.UrlEncode("KemenkeuRI")}" +
+                $"&text={WebUtility.UrlEncode("Ingin tahu sulitnya jadi Menteri Keuangan? Mainkan permainan ini! Klik")}" +
+                $"&tw_p=tweetbutton" +
+                $"&via={WebUtility.UrlEncode("KemenkeuRI")}";
+    var twitterShareUrl = $"{twitterUrl}&url={WebUtility.UrlEncode(shareUrl)}";
+}
+<!--
+Simulasi APBN
+
+Program ini ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+untuk Kementerian Keuangan Republik Indonesia.
+-->
+<!DOCTYPE html>
+<html lang="id" xml:lang="id" xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="Kementerian Keuangan Republik Indonesia, Danang Galuh Tegar Prasetyo (https://danang.id/)">
+    <meta name="description" content="Permainan Simulasi Anggaran Pendapatan dan Belanja Negara">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="@($"{name} - {title}")" />
+    <meta property="og:description" content="Ingin tahu sulitnya jadi Menteri Keuangan? Mainkan permainan ini!" />
+    <meta property="og:locale" content="id_ID" />
+    <meta property="og:url" content="@(baseUrl)" />
+    <meta property="og:image" content="@(baseUrl)/media/open-graph-card.jpg" />
+    <meta property="og:image:alt" content="@(title)" />
+    <meta property="og:image:type" content="image/jpeg" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:site" content="@("@KemenkeuRI")" />
+    <meta name="twitter:title" content="@($"{name} - {title}")" />
+    <meta name="twitter:description" content="Ingin tahu sulitnya jadi Menteri Keuangan? Mainkan permainan ini!" />
+    <meta name="twitter:image" content="@(baseUrl)/media/twitter-card.jpg" />
+    <meta name="twitter:image:alt" content="@(title)" />
+
+    <title>@(title) - Kementerian Keuangan</title>
+    <partial name="_PageIconPartial" />
+
+    <partial name="_GoogleTagManagerScriptPartial" />
+    <partial name="_ChartStylePartial" />
+
+    <environment include="Development">
+        <link href="~/styles/base.css" rel="stylesheet" type="text/css">
+    </environment>
+    <environment exclude="Development">
+        <link href="~/styles/base.min.css" rel="stylesheet" type="text/css">
+    </environment>
+    <environment include="Development">
+        <link href="~/styles/publication.css" rel="stylesheet" type="text/css">
+    </environment>
+    <environment exclude="Development">
+        <link href="~/styles/publication.min.css" rel="stylesheet" type="text/css">
+    </environment>
+    <environment include="Development">
+        <link href="~/styles/layout.font.css" rel="stylesheet" type="text/css">
+    </environment>
+    <environment exclude="Development">
+        <link href="~/styles/layout.font.min.css" rel="stylesheet" type="text/css">
+    </environment>
+
+    <partial name="_FigletScriptPartial" />
+    <partial name="_ChartScriptPartial" />
+    <partial name="_VueScriptPartial" />
+    <partial name="_AxiosScriptPartial" />
+</head>
+
+<body>
+    <partial name="_NoScriptPartial" />
+    <script lang="js">
+window.__SERVER_DATA__={baseUrl:"@(Html.Raw(baseUrl))",change:parseFloat(@(change)),facebookShareUrl:"@(Html.Raw(facebookShareUrl))",facebookUrl:"@(Html.Raw(facebookUrl))",isSurplus:@(isSurplus ? "true" : "false"),positiveChange:parseFloat(@(positiveChange)),sessionId:"@(sessionId)",totalExpenditure:parseFloat(@(totalExpenditure)),totalIncome:parseFloat(@(totalIncome)),twitterShareUrl:"@(Html.Raw(twitterShareUrl))",twitterUrl:"@(Html.Raw(twitterUrl))"}
+    </script>
+
+    <nav class="navigation">
+        <img class="ministry-logo" src="~/media/ministry-logo-with-title.png" alt="Kementerian Keuangan Republik Indonesia" />
+    </nav>
+
+    <div class="container">
+        <div class="content main-content">
+            <div class="chart">
+                <canvas id="canvas-chart"></canvas>
+            </div>
+            <div class="click-to-action">
+                <a id="facebook-share-button"
+                   class="button facebook-share-button"></a>
+                <a id="twitter-share-button"
+                   class="button twitter-share-button"></a>
+                <a id="new-session-button"
+                   class="button new-session-button"></a>
+            </div>
+        </div>
+        <div class="content side-content">
+            <div class="header">
+                <p class="title">Rancangan @(stateBudgetName)</p>
+                <p class="sub-title">versi @(name)</p>
+            </div>
+            <div class="card-wrapper">
+                <div class="card">
+                    <p style="margin-bottom: 1rem; font-weight: 600;">
+                        Saya telah berhasil merancang Anggaran Pendapatan dan Belanja Negara (APBN) versi saya
+                        sendiri. Berikut adalah hasil rancangan APBN versi saya.
+                    </p>
+                    <p style="margin-bottom: 0.5rem;">
+                        Pendapatan Negara sebesar <span id="total-income" style="font-weight: 600;">Rp0 T</span>.
+                    </p>
+                    <p style="margin-bottom: 0.5rem;">
+                        Belanja Negara sebesar <span id="total-expenditure" style="font-weight: 600;">Rp0 T</span>.
+                    </p>
+                    <p style="margin-bottom: 0.5rem;">
+                        @(isSurplus ? "Surplus" : "Defisit") Anggaran sebesar
+                        <span id="change" style="font-weight: 600;">Rp0 T</span>.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <environment include="Development">
+        <script lang="js" src="~/scripts/publication.js"></script>
+    </environment>
+    <environment exclude="Development">
+        <script lang="js" src="~/scripts/publication.min.js"></script>
+    </environment>
+</body>
+
+</html>

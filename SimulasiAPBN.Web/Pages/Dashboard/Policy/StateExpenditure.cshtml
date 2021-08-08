@@ -1,0 +1,436 @@
+@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+@page
+@using SimulasiAPBN.Core.Common
+@model StateExpenditure
+
+@{
+    Layout = "_Layout";
+    ViewBag.Title = "Belanja Negara";
+}
+
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Belanja Negara</h1>
+    @if (Model.StateBudgets.Any())
+    {
+        <button class="btn btn-warning btn-sm" v-on:click="onShowAddStateExpenditureModal">
+            <i class="fas fa-plus fa-fw"></i>&nbsp;
+            Tambah Anggaran
+        </button>
+    }
+</div>
+
+<partial name="_AlertPartial" />
+
+<!-- Content Row -->
+<div class="row">
+    @if (!Model.StateBudgets.Any())
+    {
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Daftar Belanja Negara</h6>
+                </div>
+                <div class="card-body">
+                    Belum ada Kebijakan Anggaran Pendapatan dan Belanja Negara yang dicatat.<br />
+                    Silakan tambah kebijakan baru untuk memulai.
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-sm-flex align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Daftar Belanja Negara</h6>
+                    <form method="get" class="form-inline">
+                        <div class="form-group mx-sm-3 mb-2">
+                            <label for="stateBudgetId" class="sr-only">
+                                Kebijakan
+                            </label>
+                            <select class="custom-select custom-select-sm"
+                                    name="StateBudgetId"
+                                    id="stateBudgetId"
+                                    v-model="activeStateBudgetId">
+                                @foreach (var stateBudget in Model.StateBudgets)
+                                {
+                                    <option value="@stateBudget.Id">
+                                        @Formatter.GetStateBudgetPolicyName(stateBudget)
+                                    </option>
+                                }
+                            </select>
+                        </div>&nbsp;
+                        <button class="btn btn-primary btn-sm mb-2" type="submit">
+                            Ganti
+                        </button>
+                    </form>
+                </div>
+                <div class="card-body">
+                    <table class="mb-2">
+                        <tr>
+                            <td class="p-1">Total Anggaran Belanja Negara</td>
+                            <td class="p-1">:</td>
+                            <td class="p-1"><strong>{{toCurrency(@Model.TotalAllocation)}} T</strong></td>
+                        </tr>
+                    </table>
+                    <hr />
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="stateExpenditureTable">
+                            <thead class="text-center">
+                            <th>Anggaran</th>
+                            <th>Total Alokasi</th>
+                            <th>Simulasi Maksimum</th>
+                            <th>Aksi</th>
+                            </thead>
+                            <tbody>
+                                @foreach (var expenditure in Model.StateExpenditures)
+                                {
+                                    <tr>
+                                        <td>@expenditure.Budget.Function</td>
+                                        <td class="text-center">{{toCurrency(@expenditure.TotalAllocation)}} T</td>
+                                        <td class="text-center">
+                                            {{toLocale(@expenditure.SimulationMaximumMultiplier)}} x Alokasi
+                                        </td>
+                                        <td class="text-center">
+                                            <a class="btn btn-outline-primary btn-sm"
+                                               asp-page="StateExpenditureAllocation"
+                                               asp-route-StateExpenditureId="@expenditure.Id">
+                                                Atur Alokasi
+                                            </a>&nbsp;
+                                            <button class="btn btn-outline-primary btn-sm"
+                                                    v-on:click="e => onShowModifyStateExpenditureModal(e, '@expenditure.Id')">
+                                                Ubah
+                                            </button>&nbsp;
+                                            <button class="btn btn-danger btn-sm"
+                                                    v-on:click="e => onShowRemoveStateExpenditureModal(e, '@expenditure.Id')">
+                                                Hapus
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Styles
+{
+    <partial name="_DataTableStylePartial" />
+}
+
+@section Scripts
+{
+    <partial name="_DataTableScriptPartial" />
+    <script lang="js">
+    var app = {
+        data: {
+            alerts: JSON.parse('@Json.Serialize(Model.Alerts)'),
+            sweetAlert: {
+                text: '@Model.SweetAlert.Text',
+                title: '@Model.SweetAlert.Title',
+                icon: '@Model.SweetAlert.Type',
+                button: "OK"
+            },
+            loadingState: false,
+            availableBudgetsCount: @Model.AvailableBudgets.Count,
+            budgetsCount: @Model.Budgets.Count,
+            stateBudget: JSON.parse('@Json.Serialize(Model.StateBudget)'),
+            stateExpenditures: JSON.parse('@Json.Serialize(Model.StateExpenditures)'),
+            activeStateBudgetId: '@Model.StateBudget.Id',
+            activeStateExpenditure: {
+                id: "",
+                budget: {
+                    id: "",
+                    "function": ""
+                },
+                budget_id: "",
+                total_allocation: 0,
+                simulation_maximum_multiplier: 200,
+            },
+            postAction: '@StateExpenditure.AddStateExpenditureAction',
+        },
+        methods: {
+            toLocale(value) {
+                return window.toLocale(value);
+            },
+            toCurrency(value) {
+                return window.toCurrency(value);
+            },
+            onAlertClose(index) {
+                this.alerts.splice(index,  1);
+            },
+            showAlert(text, title, type) {
+                this.sweetAlert.text = text;
+                this.sweetAlert.title = title;
+                this.sweetAlert.icon = type;
+                showSweetAlert(this.sweetAlert);
+                this.alerts.push({ text, title, type });
+            },
+            setActiveStateExpenditure(stateExpenditureId) {
+                var emptyStateExpenditure = {
+                    id: "",
+                    budget: {
+                        id: "",
+                        "function": ""
+                    },
+                    budget_id: "",
+                    total_allocation: 0,
+                    simulation_maximum_multiplier: 200,
+                };
+                if (!stateExpenditureId) {
+                    this.activeStateExpenditure = Object.assign({}, emptyStateExpenditure);
+                    return;
+                }
+                var stateExpenditure = this.stateExpenditures
+                    .find(expenditure => expenditure.id === stateExpenditureId);
+                if (!stateExpenditure) {
+                    this.activeStateExpenditure = Object.assign({}, emptyStateExpenditure);
+                    return;
+                }
+                this.activeStateExpenditure = Object.assign({}, stateExpenditure);
+                this.activeStateExpenditure.simulation_maximum_multiplier =
+                    (parseFloat(stateExpenditure.simulation_maximum_multiplier) * 100).toFixed(2)
+            },
+            onShowAddStateExpenditureModal() {
+                this.postAction = '@StateExpenditure.AddStateExpenditureAction';
+                this.setActiveStateExpenditure();
+                $("#upsertStateExpenditureModal").modal("show");
+            },
+            onShowModifyStateExpenditureModal(event, stateExpenditureId) {
+            	event.preventDefault();
+                this.postAction = '@StateExpenditure.ModifyStateExpenditureAction';
+                this.setActiveStateExpenditure(stateExpenditureId);
+                $("#upsertStateExpenditureModal").modal("show");
+            },
+            onShowRemoveStateExpenditureModal(event, stateExpenditureId) {
+            	event.preventDefault();
+                this.postAction = '@StateExpenditure.RemoveStateExpenditureAction';
+                this.setActiveStateExpenditure(stateExpenditureId);
+                $("#removeStateExpenditureModal").modal("show");
+            },
+            onUpsertStateExpenditureButtonClicked() {
+                this.loadingState = true;
+                document.getElementById("upsert-state-expenditure-form").submit();
+            },
+            onRemoveStateExpenditureButtonClicked() {
+                this.loadingState = true;
+                document.getElementById("remove-state-expenditure-form").submit();
+            },
+        },
+        mounted() {
+            showSweetAlert(this.sweetAlert);
+            @if (Model.StateBudgets.Any())
+            {
+                @Html.Raw("$('#stateExpenditureTable').DataTable();")
+            }
+        },
+    };
+    </script>
+}
+
+@section Modals
+{
+    <!-- Upsert State Expenditure Modal -->
+    <div class="modal fade"
+         id="upsertStateExpenditureModal"
+         tabindex="-1"
+         role="dialog"
+         aria-labelledby="upsertStateExpenditureModal"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="upsertStateExpenditureModalLabel">
+                        Belanja Negara
+                    </h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Tutup">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div v-if="availableBudgetsCount > 0 || postAction === '@StateExpenditure.ModifyStateExpenditureAction'"
+                     class="modal-body">
+                    <div class="alert alert-info fade show font-weight-light" role="alert">
+                        <strong>Informasi:</strong><br />
+                        Nilai Total Alokasi dalam triliun Rupiah.
+                    </div>
+                    <div class="alert alert-info fade show font-weight-light" role="alert">
+                        <strong>Informasi:</strong><br />
+                        Simulasi Maksimum adalah nilai maksimum alokasi anggaran yang dapat diatur pengguna
+                        di dalam permainan simulasi dibandingkan nilai alokasi anggaran yang sebenarnya.
+                    </div>
+                    <form id="upsert-state-expenditure-form" method="post">
+                        <input type="hidden" name="action" v-model="postAction" />
+                        <input type="hidden"
+                               name="id"
+                               v-if="postAction === '@StateExpenditure.ModifyStateExpenditureAction'"
+                               v-model="activeStateExpenditure.id" />
+                        <div class="form-group row">
+                            <label for="budget_id" class="col-md-4 col-form-label">
+                                Fungsi
+                            </label>
+                            <div class="col-md-8">
+                                <select class="custom-select"
+                                        id="budget_id"
+                                        name="budgetId"
+                                        v-bind:readonly="loadingState"
+                                        v-model="activeStateExpenditure.budget_id">
+                                    <option disabled value="">Silakan pilih Fungsi</option>
+                                    <option v-if="postAction === '@StateExpenditure.ModifyStateExpenditureAction'"
+                                            v-bind:value="activeStateExpenditure.budget.id">
+                                        {{ activeStateExpenditure.budget.function }}
+                                    </option>
+                                    @foreach (var budget in Model.AvailableBudgets)
+                                    {
+                                        <option value="@budget.Id">
+                                            @budget.Function
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="total_allocation" class="col-md-4 col-form-label">
+                                Total Alokasi
+                            </label>
+                            <div class="col-md-8">
+                                <input type="number"
+                                       step="0.000001"
+                                       class="form-control"
+                                       id="total_allocation"
+                                       name="totalAllocation"
+                                       v-bind:readonly="loadingState"
+                                       v-model="activeStateExpenditure.total_allocation" />
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <label for="simulation_maximum_multiplier" class="col-md-6 col-12 col-form-label">
+                                Simulasi Maksimum (%)
+                            </label>
+                            <div class="col-md-4 col-9">
+                                <input type="range"
+                                       class="form-control"
+                                       min="100"
+                                       max="1000"
+                                       step="0.01"
+                                       id="simulation_maximum_multiplier"
+                                       name="simulationMaximumMultiplier"
+                                       v-bind:readonly="loadingState"
+                                       v-model="activeStateExpenditure.simulation_maximum_multiplier" />
+                            </div>
+                            <div class="col-md-2 col-3">
+                                <input type="number"
+                                       min="100"
+                                       max="1000"
+                                       step="0.01"
+                                       class="form-control-plaintext"
+                                       v-bind:readonly="loadingState"
+                                       v-model="activeStateExpenditure.simulation_maximum_multiplier" />
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div v-else class="modal-body">
+                    <div class="alert alert-warning fade show font-weight-light" role="alert">
+                        <strong>Perhatian!</strong><br />
+                        <span v-if="budgetsCount > 0">
+                            Seluruh Anggaran yang tersedia telah dikaitkan dengan
+                            @(Formatter.GetStateBudgetPolicyName(Model.StateBudget)).
+                        </span>
+                        <span v-else>
+                            Tidak ada Anggaran yang tersedia untuk dikaitkan ke
+                            @(Formatter.GetStateBudgetPolicyName(Model.StateBudget))
+                        </span>
+                        <br /><br />
+                        <em>
+                            Anda dapat mengatur Anggaran yang tersedia di panel
+                            <a asp-page="/Dashboard/Budgeting/Budget">Anggaran</a>.
+                        </em>
+                    </div>
+                </div>
+                <div v-if="availableBudgetsCount > 0 || postAction === '@StateExpenditure.ModifyStateExpenditureAction'"
+                     class="modal-footer">
+                    <button class="btn btn-secondary"
+                            type="button"
+                            v-bind:disabled="loadingState"
+                            data-dismiss="modal">
+                        Batal
+                    </button>
+                    <button class="btn btn-warning"
+                            type="button"
+                            v-bind:disabled="loadingState"
+                            v-on:click="onUpsertStateExpenditureButtonClicked">
+                        <i class="fas fa-spinner fa-spin" v-if="loadingState"></i>
+                        <div v-else>
+                            <span v-if="postAction === '@StateExpenditure.AddStateExpenditureAction'">Tambah</span>
+                            <span v-else>Ubah</span>
+                        </div>
+                    </button>
+                </div>
+                <div v-else class="modal-footer">
+                    <button class="btn btn-secondary"
+                            type="button"
+                            v-bind:disabled="loadingState"
+                            data-dismiss="modal">
+                        Batal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remove State Expenditure Modal -->
+    <div class="modal fade"
+         id="removeStateExpenditureModal"
+         tabindex="-1" role="dialog"
+         aria-labelledby="removeStateExpenditureModal"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="removeStateExpenditureModalLabel">
+                        Hapus Anggaran dari APBN?
+                    </h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Tutup">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="remove-state-expenditure-form" method="post">
+                        <input type="hidden" name="action" v-model="postAction" />
+                        <input type="hidden" name="id" v-model="activeStateExpenditure.id" />
+                    </form>
+                    <p>
+                        Anda akan menghapus anggaran berikut dari APBN.<br />
+                        &nbsp;-&nbsp;Fungsi {{ activeStateExpenditure.budget.function }}
+                    </p>
+                    <p class="font-weight-bold">Lanjutkan?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary"
+                            type="button"
+                            v-bind:disabled="loadingState"
+                            data-dismiss="modal">
+                        Batal
+                    </button>
+                    <button class="btn btn-danger"
+                            type="button"
+                            v-bind:disabled="loadingState"
+                            v-on:click="onRemoveStateExpenditureButtonClicked">
+                        <i class="fas fa-spinner fa-spin" v-if="loadingState"></i>
+                        <span v-else>Hapus</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}

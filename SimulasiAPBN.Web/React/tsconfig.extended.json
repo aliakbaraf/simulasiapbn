@@ -1,0 +1,24 @@
+{
+	"compilerOptions": {
+		"baseUrl": "./",
+		"paths": {
+			// folder aliases
+			"@root": ["./"],
+			"@root/*": ["./*"],
+			"@assets": ["./src/assets/"],
+			"@assets/*": ["./src/assets/*"],
+			"@common": ["./src/common/"],
+			"@common/*": ["./src/common/*"],
+			"@components": ["./src/components/"],
+			"@components/*": ["./src/components/*"],
+			"@core": ["./src/core/"],
+			"@core/*": ["./src/core/*"],
+			"@flow": ["./src/flow/"],
+			"@flow/*": ["./src/flow/*"],
+			"@layouts": ["./src/layouts/"],
+			"@layouts/*": ["./src/layouts/*"],
+			"@screens": ["./src/screens/"],
+			"@screens/*": ["./src/screens/*"]
+		}
+	}
+}

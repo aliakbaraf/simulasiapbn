@@ -1,0 +1,147 @@
+@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+@{
+    Layout = "_Layout";
+    ViewBag.Title = null;
+}
+
+@section Styles
+{
+    <style>
+        .alert {
+            font-size: small;
+        }
+    </style>
+}
+
+@if (Context.Request.Query["PasswordChanged"] == true.ToString())
+{
+    <div class="alert alert-success alert-dismissible fade show font-weight-light"
+         role="alert">
+        Kata sandi Anda berhasil diubah.<br />
+        Silakan masuk kembali.
+        <button type="button" class="close" data-dismiss="alert" aria-label="Tutup">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+else if (Context.Request.Query.ContainsKey("ReturnUrl"))
+{
+    <div class="alert alert-warning alert-dismissible fade show font-weight-light"
+         role="alert">
+        Halaman yang Anda tuju perlu otentikasi.<br />
+        Silakan masuk terlebih dahulu.
+        <button type="button" class="close" data-dismiss="alert" aria-label="Tutup">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+else if (Context.Request.Query["SessionExpired"] == true.ToString())
+{
+    <div class="alert alert-warning alert-dismissible fade show font-weight-light"
+         role="alert">
+        Sesi akun Anda telah berakhir.<br />
+        Silakan masuk kembali untuk mengakses dasbor.
+        <button type="button" class="close" data-dismiss="alert" aria-label="Tutup">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+<div class="alert alert-danger alert-dismissible fade show font-weight-light"
+     role="alert"
+     v-if="alertText !== ''">
+    {{alertText}}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Tutup" v-on:click="onAlertClose">
+        <span aria-hidden="true">&times;</span>
+    </button>
+</div>
+
+<form id="sign-in-form" class="user" method="post">
+    <div class="form-group">
+        <input required
+               type="text"
+               name="Username"
+               class="form-control form-control-user"
+               aria-required="true"
+               placeholder="Nama Pengguna"
+               v-model="username" />
+    </div>
+    <div class="form-group">
+        <input required
+               type="password"
+               name="Password"
+               class="form-control form-control-user"
+               aria-required="true"
+               v-model="password"
+               placeholder="Kata Sandi" />
+    </div>
+    <button class="btn btn-warning btn-user btn-block"
+            v-on:click="onSignInButtonClicked"
+            v-bind:disabled="loadingState">
+        <i class="fas fa-spinner fa-spin" v-if="loadingState"></i>
+        <span v-if="!loadingState">Masuk</span>
+    </button>
+</form>
+
+<div style="margin-top: 10px;">
+    <a class="btn" href="/" target="_blank">
+        <span class="small">
+            <i class="fas fa-fw fa-arrow-circle-right"></i>&nbsp;Menuju Simulasi
+        </span>
+    </a>
+</div>
+
+@section Scripts
+{
+    <script lang="js">
+	var app = {
+		el: '#app',
+		data: {
+			alertText: "@ViewBag.ErrorMessage",
+			sweetAlert: {
+				text: "@ViewBag.ErrorMessage",
+				title: "Otentikasi Gagal",
+				icon: "error",
+				button: "OK"
+			},
+			username: "@ViewBag.Username",
+			password: "",
+			loadingState: false,
+		},
+		methods: {
+			onAlertClose() {
+				this.alertText = "";
+			},
+			onSignInButtonClicked(event) {
+				event.preventDefault();
+				this.username = this.username.trim();
+				if (!/^.{1,}$/.test(this.username)) {
+					this.alertText = "Silakan masukan Nama Pengguna Anda.";
+				} else if (!/^.{1,}$/.test(this.password)) {
+					this.alertText = "Silakan masukan Kata Sandi Anda.";
+				} else {
+					this.loadingState = true;
+					document.getElementById("sign-in-form").submit();
+				}
+			},
+		},
+		mounted() {
+			var inputs = document.getElementsByTagName("input");
+			for (var input of inputs) {
+				input.addEventListener("keyup", (event) => {
+					if (event.keyCode === 13) {
+						this.onSignInButtonClicked(event);
+					}
+				});
+			}
+			showSweetAlert(this.sweetAlert);
+		},
+	};
+    app = new Vue(app);
+    </script>
+}

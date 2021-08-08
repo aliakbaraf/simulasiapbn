@@ -1,0 +1,146 @@
+﻿/**
+ * Simulasi APBN
+ *
+ * Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+ * untuk Kementerian Keuangan Republik Indonesia.
+ */
+.container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    width: calc(100vw - 3rem);
+    padding: 1.5rem;
+}
+
+.container .content {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.container .main-content {
+    order: 2;
+    width: 100%;
+    margin-top: 0.75rem;
+        
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.container .side-content {
+    order: 1;
+    width: 100%;
+    margin-bottom: 0.75rem;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+@media (min-width: 768px) {
+    .container {
+        flex-direction: row;
+    }
+
+    .container .content {
+        margin-left: 0.75rem;
+        margin-right: 0.75rem;
+    }
+
+    .container .side-content {
+        order: 1;
+        width: 60%
+    }
+}
+
+.main-content .chart {
+    width: 100%;
+    max-width: 100%;
+}
+
+.main-content .click-to-action {
+    width: 100%;
+    
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    align-items: center;
+
+    margin-top: 1.25rem;
+}
+
+.main-content .click-to-action .button {
+    margin-left: 0.625rem;
+    margin-bottom: 0.625rem;
+}
+
+.side-content .header {
+    width: 100%;
+    margin-bottom: 1.5rem;
+}
+
+.side-content .header .title {
+    color: var(--primary);
+    font-size: 1.375rem;
+    font-weight: 900;
+
+    margin-bottom: 0.25rem;
+}
+
+.side-content .header .sub-title {
+    font-weight: 600;
+}
+
+.side-content .card-wrapper {
+    width: 100%;
+    max-width: 100%;
+}
+
+.side-content .card-wrapper .card {
+    background-color: var(--primary);
+    color: var(--white);
+    border-radius: 0.25rem;
+    padding: 0.75rem;
+}
+
+.button {
+    height: 2rem;
+    background-color: none;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    border: none;
+    padding: 0;
+}
+
+.facebook-share-button {
+    width: 6rem;
+    background-image: url("/media/facebook-share-button.png");
+}
+
+.facebook-share-button:hover {
+    background-image: url("/media/facebook-share-button-hover.png");
+}
+
+.twitter-share-button {
+    width: 6rem;
+    background-image: url("/media/twitter-share-button.png");
+}
+
+.twitter-share-button:hover {
+    background-image: url("/media/twitter-share-button-hover.png");
+}
+
+.new-session-button {
+    width: 11rem;
+    background-image: url("/media/new-session-button.png");
+}
+
+.new-session-button:hover {
+    background-image: url("/media/new-session-button-hover.png");
+}

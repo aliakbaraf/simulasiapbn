@@ -1,0 +1,116 @@
+@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+@page
+@using SimulasiAPBN.Core.Common
+@model EconomicMacroDetail
+
+@{
+    Layout = "_Layout";
+    ViewBag.Title = $"Detail {Model.EconomicMacroName}";
+}
+
+<!-- Page Heading -->
+<div class="d-sm-flex mb-4">
+    <a class="btn btn-sm" asp-page="EconomicMacro">
+        <i class="fas fa-fw fa-arrow-left"></i>&nbsp;
+    </a>&nbsp;
+    <h1 class="h3 mb-0 text-gray-800">Detail @Model.EconomicMacroName</h1>
+    <button class="btn btn-primary btn-sm ml-auto" v-on:click="onSaveButtonClicked">
+        <i class="fas fa-save fa-fw"></i>&nbsp;
+        <i class="fas fa-spinner fa-spin" v-if="loadingState"></i>
+        Simpan
+    </button>
+</div>
+
+<partial name="_AlertPartial" />
+
+<!-- Content Row -->
+<div class="row">
+    <form method="post" id="economic-macro-detail-form" class="col-12">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-sm-flex align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        Informasi
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="form-group row">
+                        <label for="@EconomicMacroDetail.DescriptionIdentifier" class="col-12 col-md-4 col-lg-3 col-form-label">
+                            Deskripsi
+                        </label>
+                        <div class="col-12 col-md-8 col-lg-9">
+                            <textarea id="@EconomicMacroDetail.DescriptionIdentifier"
+                                      name="@EconomicMacroDetail.DescriptionIdentifier" class="form-control"
+                                      v-bind:readonly="loadingState" rows="4">@Model.EconomicMacro.Description</textarea>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="@EconomicMacroDetail.NarationIdentifier" class="col-12 col-md-4 col-lg-3 col-form-label">
+                            Kesimpulan Positif
+                        </label>
+                        <div class="col-12 col-md-8 col-lg-9">
+                            <textarea id="@EconomicMacroDetail.NarationIdentifier"
+                                      name="@EconomicMacroDetail.NarationIdentifier" class="form-control"
+                                      v-bind:readonly="loadingState" rows="4">@Model.EconomicMacro.Naration</textarea>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="@EconomicMacroDetail.NarationMinusIdentifier" class="col-12 col-md-4 col-lg-3 col-form-label">
+                            Kesimpulan Negatif
+                        </label>
+                        <div class="col-12 col-md-8 col-lg-9">
+                            <textarea id="@EconomicMacroDetail.NarationMinusIdentifier"
+                                      name="@EconomicMacroDetail.NarationMinusIdentifier" class="form-control"
+                                      v-bind:readonly="loadingState" rows="4">@Model.EconomicMacro.NarationDefisit</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts
+{
+    <script lang="js">
+    var app = {
+        data: {
+            alerts: JSON.parse('@Json.Serialize(Model.Alerts)'),
+            sweetAlert: {
+                text: '@Model.SweetAlert.Text',
+                title: '@Model.SweetAlert.Title',
+                icon: '@Model.SweetAlert.Type',
+                button: "OK"
+            },
+            description: '@Model.EconomicMacro.Description',
+            naration: '@Model.EconomicMacro.Naration',
+            narationDefisit: '@Model.EconomicMacro.NarationDefisit',
+            loadingState: false,
+        },
+        methods: {
+            onAlertClose(index) {
+                this.alerts.splice(index,  1);
+            },
+            showAlert(text, title, type) {
+                this.sweetAlert.text = text;
+                this.sweetAlert.title = title;
+                this.sweetAlert.icon = type;
+                showSweetAlert(this.sweetAlert);
+                this.alerts.push({ text, title, type });
+            },
+            onSaveButtonClicked(event) {
+            	event.preventDefault();
+                document.getElementById("economic-macro-detail-form").submit();
+            },
+        },
+        mounted() {
+            showSweetAlert(this.sweetAlert);
+        },
+    };
+    </script>
+}

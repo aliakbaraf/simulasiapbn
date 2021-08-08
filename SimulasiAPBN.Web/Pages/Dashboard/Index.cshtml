@@ -1,0 +1,277 @@
+﻿@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+@page
+@using SimulasiAPBN.Core.Common
+@model Index
+@{
+    Layout = "_Layout";
+    ViewBag.Title = null;
+}
+
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">@Model.Greeting, @Model.AccountFirstName!</h1>
+</div>
+
+<partial name="_AlertPartial" />
+
+<!-- Content Row -->
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-info fade show font-weight-light" role="alert">
+            <strong>Informasi:</strong><br />
+            Status proses <strong>Baru Dimulai</strong> menunjukkan bahwa pemain baru saja memulai sesi simulasi APBN
+            dan belum menyimpan perubahan apa pun pada rancangan APBN versi pemain.<br />
+            Status proses <strong>Dalam Proses</strong> menunjukkan bahwa pemain telah menyimpan suatu perubahan pada
+            rancangan APBN versi pemain.<br />
+            Status proses <strong>Diselesaikan</strong> menunjukkan bahwa pemain telah menyelesaikan atau mengakhiri
+            penyusunan rancangan APBN versi pemain.
+        </div>
+    </div>
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-body">
+                <div class="form-group row">
+                    <label class="col-12 col-md-4 col-lg-3 col-form-label">
+                        Status Aplikasi
+                    </label>
+                    <div class="col-12 col-md-8 col-lg-9">
+                        @if (Model.IsApplicationReady)
+                        {
+                            <strong style="color: green;">@Model.ApplicationStatus</strong>
+                        }
+                        else
+                        {
+                            <strong style="color: red;">@Model.ApplicationStatus</strong>
+                        }
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-12 col-md-4 col-lg-3 col-form-label">
+                        Deskripsi Status
+                    </label>
+                    <div class="col-12 col-md-8 col-lg-9">
+                        <p>@Model.ApplicationStatusDescription</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12 col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-sm-flex align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Statistik Permainan</h6>
+            </div>
+            <div class="card-body">
+                <p>
+                    <strong>Statistik Permainan Simulasi</strong>
+                </p>
+                <table class="mb-2">
+                    <tr>
+                        <td class="p-1">Total Permainan</td>
+                        <td class="p-1">:</td>
+                        <td class="p-1"><strong>@Model.SimulationCount.All simulasi</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="p-1">Baru Dimulai</td>
+                        <td class="p-1">:</td>
+                        <td class="p-1">@Model.SimulationCount.Started simulasi</td>
+                    </tr>
+                    <tr>
+                        <td class="p-1">Dalam Proses</td>
+                        <td class="p-1">:</td>
+                        <td class="p-1">@Model.SimulationCount.OnProgress simulasi</td>
+                    </tr>
+                    <tr>
+                        <td class="p-1">Diselesaikan</td>
+                        <td class="p-1">:</td>
+                        <td class="p-1">@Model.SimulationCount.Completed simulasi</td>
+                    </tr>
+                </table>
+                <hr />
+                <p>
+                    <strong>Statistik Pembagian Hasil Simulasi</strong>
+                </p>
+                <table class="mb-2">
+                    <tr>
+                        <td class="p-1">Total Dibagikan</td>
+                        <td class="p-1">:</td>
+                        <td class="p-1"><strong>@Model.ShareCount.All hasil</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="p-1">Facebook</td>
+                        <td class="p-1">:</td>
+                        <td class="p-1">@Model.ShareCount.FacebookPost hasil</td>
+                    </tr>
+                    <tr>
+                        <td class="p-1">Twitter</td>
+                        <td class="p-1">:</td>
+                        <td class="p-1">@Model.ShareCount.TwitterTweet hasil</td>
+                    </tr>
+                </table>
+                <hr />
+                <p>
+                    <strong>Statistik <i>Referrals</i></strong>
+                </p>
+                <table class="mb-2">
+                    <tr>
+                        <td class="p-1">Total <i>Referrals</i></td>
+                        <td class="p-1">:</td>
+                        <td class="p-1"><strong>@Model.ShareClickCount.All klik</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="p-1">Facebook</td>
+                        <td class="p-1">:</td>
+                        <td class="p-1">@Model.ShareClickCount.FacebookPostClick klik</td>
+                    </tr>
+                    <tr>
+                        <td class="p-1">Twitter</td>
+                        <td class="p-1">:</td>
+                        <td class="p-1">@Model.ShareClickCount.TwitterTweetClick klik</td>
+                    </tr>
+                </table>
+                    </div>
+                </div>
+    </div>
+    <div class="col-12 col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-sm-flex align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Statistik menurut Kebijakan</h6>
+                @if (Model.StateBudgets.Any())
+                {
+                    <form method="get" class="form-inline">
+                        <div class="form-group mx-sm-3 mb-2">
+                            <label for="stateBudgetId" class="sr-only">
+                                Kebijakan
+                            </label>
+                            <select class="custom-select custom-select-sm"
+                                    name="StateBudgetId"
+                                    id="stateBudgetId"
+                                    v-model="activeStateBudgetId">
+                                @foreach (var stateBudget in Model.StateBudgets)
+                                {
+                                    <option value="@stateBudget.Id">
+                                        @Formatter.GetStateBudgetPolicyName(stateBudget)
+                                    </option>
+                                }
+                            </select>
+                        </div>&nbsp;
+                        <button class="btn btn-primary btn-sm mb-2" type="submit">
+                            Ganti
+                        </button>
+                    </form>
+                }
+            </div>
+            @if (!Model.StateBudgets.Any())
+            {
+                <div class="card-body">
+                    Belum ada Kebijakan Anggaran Pendapatan dan Belanja Negara yang dicatat.<br />
+                    Silakan tambah kebijakan baru untuk memulai.
+                </div>
+            }
+            else
+            {
+                <div class="card-body">
+                    <p>
+                        <strong>Statistik Permainan Simulasi</strong>
+                    </p>
+                    <table class="mb-2">
+                        <tr>
+                            <td class="p-1">Total Permainan</td>
+                            <td class="p-1">:</td>
+                            <td class="p-1"><strong>@Model.SimulationCountOnCurrentPolicy.All simulasi</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="p-1">Baru Dimulai</td>
+                            <td class="p-1">:</td>
+                            <td class="p-1">@Model.SimulationCountOnCurrentPolicy.Started simulasi</td>
+                        </tr>
+                        <tr>
+                            <td class="p-1">Dalam Proses</td>
+                            <td class="p-1">:</td>
+                            <td class="p-1">@Model.SimulationCountOnCurrentPolicy.OnProgress simulasi</td>
+                        </tr>
+                        <tr>
+                            <td class="p-1">Diselesaikan</td>
+                            <td class="p-1">:</td>
+                            <td class="p-1">@Model.SimulationCountOnCurrentPolicy.Completed simulasi</td>
+                        </tr>
+                    </table>
+                    <hr />
+                    <p>
+                        <strong>Statistik Belanja Negara Prioritas</strong>
+                    </p>
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="priorityTable">
+                            <thead class="text-center">
+                                <th>Fungsi Anggaran</th>
+                                <th>Jumlah Prioritas</th>
+                            </thead>
+                            <tbody>
+                                @foreach (var (budget, priority) in Model.PriorityBudgets)
+                                {
+                                    <tr>
+                                        <td>@budget.Function</td>
+                                        <td class="text-center">@priority</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Styles
+{
+    <partial name="_DataTableStylePartial" />
+}
+
+@section Scripts
+{
+    <partial name="_DataTableScriptPartial" />
+    <script lang="js">
+    var app = {
+        data: {
+            alerts: JSON.parse('@Json.Serialize(Model.Alerts)'),
+            sweetAlert: {
+                text: '@Model.SweetAlert.Text',
+                title: '@Model.SweetAlert.Title',
+                icon: '@Model.SweetAlert.Type',
+                button: "OK"
+            },
+            stateBudget: JSON.parse('@Json.Serialize(Model.StateBudget)'),
+            activeStateBudgetId: '@(Model.StateBudget?.Id ?? Guid.Empty)',
+            loadingState: false,
+            postAction: '',
+        },
+        methods: {
+            onAlertClose(index) {
+                this.alerts.splice(index,  1);
+            },
+            showAlert(text, title, type) {
+                this.sweetAlert.text = text;
+                this.sweetAlert.title = title;
+                this.sweetAlert.icon = type;
+                showSweetAlert(this.sweetAlert);
+                this.alerts.push({ text, title, type });
+            },
+        },
+        mounted() {
+            showSweetAlert(this.sweetAlert);
+            @if (Model.StateBudgets.Any())
+            {
+                @Html.Raw("$('#priorityTable').DataTable();")
+            }
+        },
+    };
+    </script>
+}

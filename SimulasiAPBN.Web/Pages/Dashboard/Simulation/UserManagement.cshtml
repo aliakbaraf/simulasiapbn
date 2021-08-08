@@ -1,0 +1,551 @@
+﻿@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+@page
+@using SimulasiAPBN.Core.Common
+@using SimulasiAPBN.Core.Enumerators
+@model UserManagement
+
+@{
+    Layout = "_Layout";
+    ViewBag.Title = "Manajemen Pengguna";
+}
+
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Manajemen Pengguna</h1>
+    <button class="btn btn-warning btn-sm" v-on:click="onShowAddAccountModal">
+        <i class="fas fa-plus fa-fw"></i>&nbsp;
+        Pengguna Baru
+    </button>
+</div>
+
+<partial name="_AlertPartial" />
+
+<!-- Content Row -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Daftar Akun Pengguna</h6>
+            </div>
+            @if (!Model.Accounts.Any())
+            {
+                <div class="card-body">
+                    Sistem gagal mengambil daftar akun pengguna.<br />
+                    Mohon hubungi tim teknis.
+                </div>
+            }
+            else
+            {
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered"
+                               id="accountTable">
+                            <thead class="text-center">
+                                <tr>
+                                    <th>Nama Lengkap</th>
+                                    <th>Alamat Email</th>
+                                    <th>Nama Pengguna</th>
+                                    <th>Peran</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var account in Model.Accounts)
+                                {
+                                    <tr>
+                                        <td>
+                                            @account.Name
+                                        </td>
+                                        <td>
+                                            @account.Email
+                                        </td>
+                                        <td class="text-center">
+                                            <strong>@account.Username</strong>
+                                        </td>
+                                        <td class="text-center">
+                                            @Formatter.GetAccountRoleName(account.Role)
+                                        </td>
+                                        <td class="text-center">
+                                            @if (account.IsActivated)
+                                            {
+                                                <span style="color: green">Aktif</span>
+                                            }
+                                            else
+                                            {
+                                                <span style="color: red">Tidak Aktif</span>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            @{
+                                                var isDeveloperSupport = Model.AccountRole == AccountRole.DeveloperSupport;
+                                                var showActions = account.Role != AccountRole.Administrator &&
+                                                                 account.Role != AccountRole.DeveloperSupport;
+                                            }
+                                            @if (isDeveloperSupport || showActions)
+                                            {
+                                                <button class="btn btn-outline-primary btn-sm"
+                                                        v-on:click="e => onShowEditAccountModal(e, '@account.Id')">
+                                                    Ubah
+                                                </button>
+                                                @if (!account.IsActivated)
+                                                {
+                                                    <button class="btn btn-outline-warning btn-sm"
+                                                            v-on:click="e => onShowAccountActivationModal(e, '@account.Id')">
+                                                        Aktifkan
+                                                    </button>
+                                                }
+                                                else
+                                                {
+                                                    <button class="btn btn-outline-warning btn-sm"
+                                                            v-on:click="e => onShowAccountDeactivationModal(e, '@account.Id')">
+                                                        Non-Aktifkan
+                                                    </button>
+                                                }
+                                                <button class="btn btn-outline-danger btn-sm"
+                                                        v-on:click="e => onShowRemoveAccountModal(e, '@account.Id')">
+                                                    Hapus
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <span>-</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Styles
+{
+    <partial name="_DataTableStylePartial" />
+}
+
+@section Scripts
+{
+    <partial name="_DataTableScriptPartial" />
+    <script lang="js">
+    var app = {
+        data: {
+            alerts: JSON.parse('@Json.Serialize(Model.Alerts)'),
+            sweetAlert: {
+                text: '@Model.SweetAlert.Text',
+                title: '@Model.SweetAlert.Title',
+                icon: '@Model.SweetAlert.Type',
+                button: "OK"
+            },
+            accounts: JSON.parse('@Json.Serialize(Model.Accounts)'),
+            activeAccount: {
+            	id: "",
+            	name: "",
+            	email: "",
+            	username: "",
+            	role: 0,
+            	is_activated: false,
+            },
+            changePasswordState: false,
+            loadingState: false,
+            postAction: '@UserManagement.AddAccountAction',
+        },
+        methods: {
+            onAlertClose(index) {
+                this.alerts.splice(index,  1);
+            },
+            showAlert(text, title, type) {
+                this.sweetAlert.text = text;
+                this.sweetAlert.title = title;
+                this.sweetAlert.icon = type;
+                showSweetAlert(this.sweetAlert);
+                this.alerts.push({ text, title, type });
+            },
+            getAccountRole(accountRoleNumber) {
+            	switch (accountRoleNumber) {
+            	    case 0:
+            	    	return "Tidak Memiliki Peran";
+            	    case 1:
+            	    	return "Dukungan Pengembang";
+            	    case 2:
+            	    	return "Pengelola";
+            	    case 3:
+            	    	return "Analis";
+            	    default:
+            	    	return "Peran Lain (tidak dikenal)";
+            	}
+            },
+            setActiveAccount(accountId) {
+                var emptyAccount = {
+                	id: "",
+                	name: "",
+                	email: "",
+                	username: "",
+                	role: 0,
+                	is_activated: false,
+                };
+                if (!accountId) {
+                    this.activeAccount = Object.assign({}, emptyAccount);
+                    return;
+                }
+                var account = this.accounts.find(entity => entity.id === accountId);
+                if (!account) {
+                    this.activeAccount = Object.assign({}, emptyAccount);
+                    return;
+                }
+                this.activeAccount = Object.assign({}, account);
+            },
+            onShowAddAccountModal(event) {
+            	event.preventDefault();
+            	this.setActiveAccount();
+            	this.changePasswordState = true;
+                this.postAction = '@UserManagement.AddAccountAction';
+                $("#accountModal").modal("show");
+
+            },
+            onShowEditAccountModal(event, accountId) {
+            	event.preventDefault();
+            	this.setActiveAccount(accountId);
+            	this.changePasswordState = false;
+                this.postAction = '@UserManagement.EditAccountAction';
+                $("#accountModal").modal("show");
+
+            },
+            onSaveAccountButtonClicked(event) {
+            	event.preventDefault();
+            	this.loadingState = true;
+            	if (!this.changePasswordState) {
+            		this.activeAccount.password = "";
+                }
+                document.getElementById("account-form").submit();
+            },
+            onShowAccountActivationModal(event, accountId) {
+            	event.preventDefault();
+            	this.setActiveAccount(accountId);
+                this.postAction = '@UserManagement.ActivateAccountAction';
+                $("#accountActivationModal").modal("show");
+
+            },
+            onActivateAccountButtonClicked(event) {
+            	event.preventDefault();
+            	this.loadingState = true;
+                document.getElementById("account-activation-form").submit();
+            },
+            onShowAccountDeactivationModal(event, accountId) {
+            	event.preventDefault();
+            	this.setActiveAccount(accountId);
+                this.postAction = '@UserManagement.DeactivateAccountAction';
+                $("#accountDeactivationModal").modal("show");
+            },
+            onDeactivateAccountButtonClicked(event) {
+            	event.preventDefault();
+            	this.loadingState = true;
+                document.getElementById("account-deactivation-form").submit();
+            },
+            onShowRemoveAccountModal(event, accountId) {
+            	event.preventDefault();
+            	this.setActiveAccount(accountId);
+                this.postAction = '@UserManagement.RemoveAccountAction';
+                $("#removeAccountModal").modal("show");
+            },
+            onRemoveAccountButtonClicked(event) {
+            	event.preventDefault();
+            	this.loadingState = true;
+                document.getElementById("remove-account-form").submit();
+            },
+        },
+        mounted() {
+            showSweetAlert(this.sweetAlert);
+            @if (Model.Accounts.Any())
+            {
+                @Html.Raw("$('#accountTable').DataTable();")
+            }
+        },
+    };
+    </script>
+}
+
+@section Modals
+{
+    <!-- Account Modal -->
+    <div class="modal fade"
+         id="accountModal"
+         tabindex="-1"
+         role="dialog"
+         aria-labelledby="accountModal"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="accountModalLabel">
+                        Akun Pengguna
+                    </h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Tutup">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="account-form" method="post">
+                        <div class="alert alert-info fade show font-weight-light" role="alert">
+                            <strong>Informasi:</strong><br />
+                            Anda hanya dapat menambah, mengubah dan menghapus akun dengan peran Analis.
+                        </div>
+                        <input type="hidden" name="id" v-model="activeAccount.id">
+                        <input type="hidden" name="action" v-model="postAction" />
+                        <div class="form-group row">
+                            <label for="name" class="col-md-4 col-form-label">
+                                Nama Lengkap
+                            </label>
+                            <div class="col-md-8">
+                                <input type="text"
+                                       class="form-control"
+                                       id="name"
+                                       name="name"
+                                       v-bind:readonly="loadingState"
+                                       v-model="activeAccount.name" />
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="email" class="col-md-4 col-form-label">
+                                Alamat Email
+                            </label>
+                            <div class="col-md-8">
+                                <input type="email"
+                                       class="form-control"
+                                       id="email"
+                                       name="email"
+                                       v-bind:readonly="loadingState"
+                                       v-model="activeAccount.email" />
+                            </div>
+                        </div>
+                        <hr />
+                        <div class="alert alert-info fade show font-weight-light" role="alert">
+                            <strong>Informasi:</strong><br />
+                            <code>Nama Pengguna</code> hanya boleh terdiri dari huruf alfabet (<mark>a-z</mark>,
+                            baik kapital maupun non-kapital), angka (<mark>0-1</mark>), garis bawah (<mark>_</mark>),
+                            garis tengah (<mark>-</mark>), dan titik (<mark>.</mark>).
+                        </div>
+                        <div class="form-group row">
+                            <label for="username" class="col-md-4 col-form-label">
+                                Nama Pengguna
+                            </label>
+                            <div class="col-md-8">
+                                <input type="text"
+                                       class="form-control"
+                                       id="username"
+                                       name="username"
+                                       v-bind:readonly="loadingState"
+                                       v-model="activeAccount.username" />
+                            </div>
+                        </div>
+                        <hr />
+                        <div v-if="postAction === '@UserManagement.EditAccountAction'" class="form-group form-row">
+                            <label class="col-form-label">
+                                Ubah Kata Sandi?
+                            </label>
+                            <div class="form-row ml-2">
+                                <div class="form-check form-check-inline custom-checkbox">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           id="changePassword"
+                                           v-model="changePasswordState">
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="changePasswordState" class="alert alert-info fade show font-weight-light" role="alert">
+                            <strong>Informasi:</strong><br />
+                            <code>Kata Sandi</code> minimum terdiri dari 8 karakter dengan harus mengandung
+                            huruf kapital, huruf non-kapital dan angka
+                        </div>
+                        <div v-if="postAction === '@UserManagement.EditAccountAction' && changePasswordState"
+                             class="alert alert-warning fade show font-weight-light"
+                             role="alert">
+                            <strong>Perhatian!</strong><br />
+                            Dengan mengubah <code>Kata Sandi</code> akun pengguna tersebut, seluruh sesi masuk pengguna
+                            tersebut akan dibatalkan (pengguna tersebut akan otomatis keluar dari sesi masuk dasbor).
+                        </div>
+                        <div v-if="changePasswordState" class="form-group row">
+                            <label for="password" class="col-md-4 col-form-label">
+                                Kata Sandi
+                            </label>
+                            <div class="col-md-8">
+                                <input type="password"
+                                       class="form-control"
+                                       id="password"
+                                       name="password"
+                                       v-bind:readonly="loadingState"
+                                       v-model="activeAccount.password" />
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary"
+                            type="button"
+                            v-bind:disabled="loadingState"
+                            data-dismiss="modal">
+                        Batal
+                    </button>
+                    <button class="btn btn-warning"
+                            type="button"
+                            v-bind:disabled="loadingState"
+                            v-on:click="onSaveAccountButtonClicked">
+                        <i class="fas fa-spinner fa-spin" v-if="loadingState"></i>
+                        <span v-else>Simpan</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Activation Modal -->
+    <div class="modal fade"
+         id="accountActivationModal"
+         tabindex="-1" role="dialog"
+         aria-labelledby="accountActivationModal"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="accountActivationModalLabel">
+                        Aktifkan Akun Pengguna?
+                    </h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Tutup">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="account-activation-form" method="post">
+                        <input type="hidden" name="action" v-model="postAction" />
+                        <input type="hidden" name="id" v-model="activeAccount.id" />
+                    </form>
+                    <p>
+                        Anda akan mengaktifkan akun pengguna berikut.<br />
+                        <strong>{{ activeAccount.name }}</strong> ({{ activeAccount.username }})<br />
+                        Peran: {{ getAccountRole(activeAccount.role) }}<br />
+                        Alamat Email: <em>{{ activeAccount.email }}</em>
+                    </p>
+                    <p class="font-weight-bold">Lanjutkan?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary"
+                            type="button"
+                            data-dismiss="modal">
+                        Batal
+                    </button>
+                    <button class="btn btn-warning"
+                            type="button"
+                            v-on:click="onActivateAccountButtonClicked">
+                        Aktifkan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Deactivation Modal -->
+    <div class="modal fade"
+         id="accountDeactivationModal"
+         tabindex="-1" role="dialog"
+         aria-labelledby="accountDeactivationModal"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="accountDeactivationModalLabel">
+                        Non-Aktifkan Akun Pengguna?
+                    </h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Tutup">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="account-deactivation-form" method="post">
+                        <input type="hidden" name="action" v-model="postAction" />
+                        <input type="hidden" name="id" v-model="activeAccount.id" />
+                    </form>
+                    <p>
+                        Anda akan me-non-aktifkan akun pengguna berikut.<br />
+                        <strong>{{ activeAccount.name }}</strong> ({{ activeAccount.username }})<br />
+                        Peran: {{ getAccountRole(activeAccount.role) }}<br />
+                        Alamat Email: <em>{{ activeAccount.email }}</em>
+                    </p>
+                    <p>
+                        <strong>Perhatian!</strong><br />
+                        <em>
+                            Dengan me-non-aktifkan akun pengguna tersebut, seluruh sesi masuk pengguna tersebut
+                            akan dibatalkan (pengguna tersebut akan otomatis keluar dari sesi masuk dasbor).
+                        </em>
+                    </p>
+                    <p class="font-weight-bold">Lanjutkan?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary"
+                            type="button"
+                            data-dismiss="modal">
+                        Batal
+                    </button>
+                    <button class="btn btn-warning"
+                            type="button"
+                            v-on:click="onDeactivateAccountButtonClicked">
+                        Non-Aktifkan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remove Account Modal -->
+    <div class="modal fade"
+         id="removeAccountModal"
+         tabindex="-1" role="dialog"
+         aria-labelledby="removeAccountModal"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="removeAccountModalLabel">
+                        Hapus Akun Pengguna?
+                    </h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Tutup">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="remove-account-form" method="post">
+                        <input type="hidden" name="action" v-model="postAction" />
+                        <input type="hidden" name="id" v-model="activeAccount.id" />
+                    </form>
+                    <p>
+                        Anda akan menghapus akun pengguna berikut.<br />
+                        <strong>{{ activeAccount.name }}</strong> ({{ activeAccount.username }})<br />
+                        Peran: {{ getAccountRole(activeAccount.role) }}<br />
+                        Alamat Email: <em>{{ activeAccount.email }}</em>
+                    </p>
+                    <p class="font-weight-bold">Lanjutkan?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary"
+                            type="button"
+                            data-dismiss="modal">
+                        Batal
+                    </button>
+                    <button class="btn btn-danger"
+                            type="button"
+                            v-on:click="onRemoveAccountButtonClicked">
+                        Hapus
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}

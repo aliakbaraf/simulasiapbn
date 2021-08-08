@@ -1,0 +1,313 @@
+@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+@page
+@using SimulasiAPBN.Core.Common
+@model Budget
+
+@{
+    Layout = "_Layout";
+    ViewBag.Title = "Anggaran";
+}
+
+<!-- FORMATTING DONE -->
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Anggaran</h1>
+    <button class="btn btn-warning btn-sm" v-on:click="onShowAddBudgetModal">
+        <i class="fas fa-plus fa-fw"></i>&nbsp;
+        Anggaran Baru
+    </button>
+</div>
+
+<partial name="_AlertPartial" />
+
+<!-- Content Row -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-sm-flex align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Daftar Anggaran</h6>
+                @if (Model.Budgets.Any())
+                {
+                    <button class="btn btn-primary btn-sm ml-auto"
+                            v-on:click="onToggleBudgetDetailButtonClicked">
+                        {{ budgetDetailButtonText }}
+                    </button>
+                }
+            </div>
+            @if (!Model.Budgets.Any())
+            {
+                <div class="card-body">
+                    Belum ada Anggaran yang dicatat.<br />
+                    Silakan tambah anggaran baru untuk memulai.
+                </div>
+            }
+            else
+            {
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered"
+                               id="budgetTable">
+                            <thead class="text-center">
+                                <tr>
+                                    <th>Fungsi</th>
+                                    <th>Jenis</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var budget in Model.Budgets)
+                                {
+                                    <tr>
+                                        <td v-bind:rowspan="showBudgetDetail ? 2 : 1" style="min-width: 15em">
+                                            <strong>@budget.Function</strong>
+                                        </td>
+                                        <td class="text-center">
+                                            @Formatter.GetBudgetTypeName(budget.Type)
+                                        </td>
+                                        <td class="text-center">
+                                            <a class="btn btn-outline-primary btn-sm"
+                                               asp-page="BudgetDetail"
+                                               asp-route-BudgetId="@budget.Id">
+                                                Ubah Detil
+                                            </a>&nbsp;
+                                            <button class="btn btn-sm btn-danger"
+                                                    v-on:click="e => onShowRemoveBudgetModal(e, '@budget.Id')">
+                                                Hapus
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="showBudgetDetail">
+                                        <td colspan="2">
+                                            @if (string.IsNullOrEmpty(budget.Description) && !budget.BudgetTargets.Any())
+                                            {
+                                                <p>Anggaran ini tidak memiliki deskripsi dan sasaran.</p>
+                                            }
+                                            @if (!string.IsNullOrEmpty(budget.Description))
+                                            {
+                                                <p>@budget.Description</p>
+                                            }
+                                            @if (budget.BudgetTargets.Any())
+                                            {
+                                                <p>Sasaran dari Anggaran @budget.Function adalah sebagai berikut.</p>
+                                                <ol>
+                                                    @foreach (var budgetTarget in budget.BudgetTargets)
+                                                    {
+                                                        <li>@budgetTarget.Description</li>
+                                                    }
+                                                </ol>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Styles
+{
+    <partial name="_DataTableStylePartial" />
+}
+
+@section Scripts
+{
+    <partial name="_DataTableScriptPartial" />
+    <script lang="js">
+    var app = {
+        data: {
+            alerts: JSON.parse('@Json.Serialize(Model.Alerts)'),
+            sweetAlert: {
+                text: '@Model.SweetAlert.Text',
+                title: '@Model.SweetAlert.Title',
+                icon: '@Model.SweetAlert.Type',
+                button: "OK"
+            },
+            budgetTypes: [{
+                value: 0,
+                name: "Belanja Pemerintah Pusat",
+            }, {
+                value: 1,
+                name: "Transfer ke Daerah",
+            }],
+            budgets: JSON.parse('@Json.Serialize(Model.Budgets)'),
+            activeBudget: {
+                id: "",
+                "function": "",
+                type: 0,
+            },
+            showBudgetDetail: true,
+        },
+        computed: {
+        	budgetDetailButtonText() {
+        		return this.showBudgetDetail ? "Sembunyikan Detil" : "Tampikan Detil";
+        	},
+        },
+        methods: {
+            onAlertClose(index) {
+                this.alerts.splice(index,  1);
+            },
+            showAlert(text, title, type) {
+                this.sweetAlert.text = text;
+                this.sweetAlert.title = title;
+                this.sweetAlert.icon = type;
+                showSweetAlert(this.sweetAlert);
+                this.alerts.push({ text, title, type });
+            },
+            /* Add Budget handlers */
+            onShowAddBudgetModal(event) {
+                event.preventDefault();
+                this.activeBudget = {
+                    id: "",
+                    "function": "",
+                    type: 0,
+                };
+                $("#addBudgetModal").modal("show");
+            },
+            onAddBudgetButtonClicked(event) {
+                event.preventDefault();
+                document.getElementById("add-budget-form").submit();
+            },
+            /* Remove Budget handlers */
+            onShowRemoveBudgetModal(event, budgetId) {
+                event.preventDefault();
+                this.activeBudget = this.budgets
+                    .find(budget => budget.id === budgetId);
+                $("#removeBudgetModal").modal("show");
+            },
+            onRemoveBudgetButtonClicked(event) {
+                event.preventDefault();
+                document.getElementById("remove-budget-form").submit();
+            },
+            /* Toggle Budget Detail handlers */
+            onToggleBudgetDetailButtonClicked(event) {
+            	event.preventDefault();
+            	this.showBudgetDetail = !this.showBudgetDetail;
+            },
+        },
+        mounted() {
+            showSweetAlert(this.sweetAlert);
+            $("#budgetTable").DataTable({
+                ordering: false,
+            });
+        },
+    };
+    </script>
+}
+
+@section Modals
+{
+    <!-- Add Budget Modal -->
+    <div class="modal fade"
+         id="addBudgetModal"
+         tabindex="-1"
+         role="dialog"
+         aria-labelledby="addBudgetModal"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addBudgetModalLabel">
+                        Anggaran Baru
+                    </h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Tutup">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-budget-form" method="post">
+                        <input type="hidden" name="action" value="@Budget.AddBudgetAction" />
+                        <div class="form-group row">
+                            <label for="function" class="col-md-4 col-form-label">Fungsi</label>
+                            <div class="col-md-8">
+                                <input type="text"
+                                       class="form-control"
+                                       id="function"
+                                       name="function"
+                                       v-model="activeBudget.function" />
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="type" class="col-md-4 col-form-label">Jenis</label>
+                            <div class="col-md-8">
+                                <select class="custom-select"
+                                        id="type"
+                                        name="type"
+                                        v-model="activeBudget.type">
+                                    <option v-for="type in budgetTypes"
+                                            v-bind:value="type.value">
+                                        {{type.name}}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary"
+                            type="button"
+                            data-dismiss="modal">
+                        Batal
+                    </button>
+                    <button class="btn btn-warning"
+                            type="button"
+                            v-on:click="onAddBudgetButtonClicked">
+                        Tambah
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remove State Budget Modal -->
+    <div class="modal fade"
+         id="removeBudgetModal"
+         tabindex="-1" role="dialog"
+         aria-labelledby="removeBudgetModal"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="removeBudgetModalLabel">
+                        Hapus Anggaran?
+                    </h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Tutup">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="remove-budget-form" method="post">
+                        <input type="hidden" name="action" value="@Budget.RemoveBudgetAction" />
+                        <input type="hidden" name="id" v-model="activeBudget.id" />
+                    </form>
+                    <p>
+                        Anda akan menghapus anggaran berikut.<br />
+                        &nbsp;-&nbsp;Fungsi {{ activeBudget.function }}
+                    </p>
+                    <p class="font-weight-bold">Lanjutkan?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary"
+                            type="button"
+                            data-dismiss="modal">
+                        Batal
+                    </button>
+                    <button class="btn btn-danger"
+                            type="button"
+                            v-on:click="onRemoveBudgetButtonClicked">
+                        Hapus
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+

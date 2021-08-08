@@ -1,0 +1,40 @@
+@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+<script src="~/vendor/datatables/jquery.dataTables.min.js"></script>
+<script src="~/vendor/datatables/dataTables.bootstrap4.min.js"></script>
+<script lang="js">
+    $.extend($.fn.dataTable.defaults, {
+        searching: true,
+        ordering: true,
+        paging: true,
+        language: {
+            decimal: ",",
+            emptyTable: "Tidak ada data untuk ditampilkan saat ini.",
+            info: "Data ke-_START_ sampai _END_ dari total _TOTAL_ entri.",
+            infoEmpty: "Data ke-0 sampai 0 dari total 0 entri.",
+            infoFiltered: "(disaring menjadi _MAX_ total entri)",
+            thousands: ".",
+            lengthMenu: "Lihat _MENU_ entri",
+            loadingRecords: "Memuat...",
+            processing: "Memproses...",
+            search: "Cari:",
+            zeroRecords: "Tidak ada data pencarian yang sesuai",
+            paginate: {
+                first: "Pertama",
+                last: "Terakhir",
+                next: "Lanjut",
+                previous: "Sebelumnya"
+            },
+            aria: {
+                sortAscending: ": aktifkan pengurutan kolom menaik",
+                sortDescending: ": aktifkan pengurutan kolom menurun"
+            }
+        },
+        lengthMenu: [25, 50, 75, 100],
+        pageLength: 25
+    });
+</script>

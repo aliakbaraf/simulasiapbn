@@ -1,0 +1,36 @@
+@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+@page
+@model Index
+
+@{
+    ViewBag.Step = 1;
+    ViewBag.Title = "Persiapan Pemasangan";
+    Layout = "_WizardLayout";
+}
+
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Persiapan Pemasangan</h1>
+</div>
+
+<!-- Content Row -->
+<div class="row">
+    <div class="col-12">
+        <p>
+            Laman ini akan memandu Anda untuk melakukan pemasangan Simulasi APBN.
+            Data yang Anda masukan selama pemasangan akan tersimpan dalam sesi peramban Anda.
+        </p>
+    </div>
+</div>
+
+@section CallToActions {
+    <a class="btn btn-primary"
+       asp-page="/Setup/Administrator">
+        Lanjut&nbsp;<i class="fas fa-fw fa-greater-than"></i>
+    </a>
+}

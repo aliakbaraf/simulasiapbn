@@ -1,0 +1,85 @@
+/**
+ * Simulasi APBN
+ *
+ * Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+ * untuk Kementerian Keuangan Republik Indonesia.
+ */
+.layout {
+	.layout-content {
+		@apply w-screen overflow-y-auto;
+		height: calc(100vh - 4rem);
+		max-height: calc(100vh - 4rem);
+	}
+
+	.floating-background {
+		@apply fixed z-40 left-0 top-0 w-screen h-screen bg-gray-900 opacity-75;
+	}
+
+	.menu-container {
+		@apply fixed z-50 left-0 top-0 w-screen h-screen bg-none
+		flex justify-center items-center;
+
+		.card {
+			@apply w-9/12 sm:w-72 h-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg
+			flex flex-col justify-center items-center px-8 py-4;
+
+			.header {
+				@apply text-center w-full pb-2;
+
+				.ministry-logo {
+					@apply w-3/6 ml-auto mr-auto;
+				}
+
+				.title {
+					@apply font-bold text-lg text-primary dark:text-secondary -mb-2;
+				}
+
+				.sub-title {
+					@apply text-xs;
+				}
+			}
+
+			.content {
+				@apply w-full flex flex-col;
+
+				Button {
+					@apply w-full mt-2;
+				}
+			}
+		}
+	}
+
+	.end-session-prompt-container {
+		@apply fixed z-50 left-0 top-0 w-screen h-screen bg-none
+		flex justify-center items-center;
+
+		.card {
+			@apply w-11/12 sm:w-96 h-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg
+			flex flex-col justify-center items-center px-8 py-4;
+
+			.header {
+				@apply text-center w-full pb-2;
+
+				.title {
+					@apply font-bold text-lg text-primary dark:text-secondary;
+				}
+			}
+
+			.content {
+				@apply text-center w-full;
+
+				.description {
+					@apply font-semibold;
+				}
+			}
+
+			.click-to-action {
+				@apply flex flex-row w-full mt-4;
+
+				Button {
+					@apply flex-1 mx-2;
+				}
+			}
+		}
+	}
+}

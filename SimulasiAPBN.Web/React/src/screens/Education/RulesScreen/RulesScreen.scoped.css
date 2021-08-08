@@ -1,0 +1,83 @@
+/**
+ * Simulasi APBN
+ *
+ * Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+ * untuk Kementerian Keuangan Republik Indonesia.
+ */
+.screen {
+	@apply flex flex-col;
+
+	.content-wrapper {
+		@apply flex flex-col md:flex-row justify-start;
+		min-height: calc(100vh - 4rem);
+	}
+}
+
+.click-to-action {
+	@apply flex md:hidden justify-end items-center h-20;
+}
+
+.click-to-action-md {
+	@apply hidden md:flex justify-end items-center w-11/12 mt-12;
+}
+
+.click-to-action Button,
+.click-to-action-md Button {
+	@apply mr-4;
+}
+
+.main-content,
+.side-content {
+	@apply px-6 md:px-8;
+}
+
+.main-content {
+	@apply flex-1 order-2 md:order-1 bg-none md:bg-gray-200 md:dark:bg-gray-900 shadow-none md:shadow pt-0 pb-0 md:py-8;
+
+	.header {
+		@apply font-extrabold text-2xl text-primary dark:text-secondary;
+	}
+
+	.description {
+		@apply font-semibold mt-5 mb-4;
+	}
+}
+
+.side-content {
+	@apply flex-1 order-1 md:order-2 py-6 flex flex-col justify-center items-center;
+
+	.image-wrapper {
+		@apply w-4/5 md:w-11/12;
+		max-width: 500px;
+
+		.rules-image {
+			@apply w-full h-full;
+		}
+	}
+}
+
+.rule-list {
+	@apply mt-2;
+
+	.rule-item {
+		@apply py-2 my-2 px-3 flex items-center rounded shadow hover:shadow-xl;
+	}
+
+	.rule-item-even {
+		@apply bg-primary hover:bg-primary-dark text-white;
+	}
+
+	.rule-item-odd {
+		@apply bg-secondary hover:bg-secondary-dark text-white;
+	}
+
+	.rule-item-number {
+		@apply w-8 h-8 text-2xl bg-white font-semibold text-gray-800 text-center rounded;
+		min-height: 2rem;
+		min-width: 2rem;
+	}
+
+	.rule-item-text {
+		@apply ml-3;
+	}
+}

@@ -1,0 +1,25 @@
+User-agent:*
+Disallow: *
+Allow: /index.html
+Allow: /static
+
+User-agent: facebookexternalhit
+Disallow: /
+Allow: /icons
+Allow: /media
+
+User-agent: Twitterbot
+Disallow: *
+Allow: /icons
+Allow: /media
+
+User-agent: Googlebot
+Disallow: /dashboard
+Disallow: /error
+Disallow: /gate
+Disallow: /setup
+Allow: /icons
+Allow: /media
+Allow: /scripts
+Allow: /styles
+Allow: /vendor

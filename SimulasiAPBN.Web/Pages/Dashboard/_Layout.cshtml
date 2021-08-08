@@ -1,0 +1,192 @@
+﻿@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+@using SimulasiAPBN.Core.Enumerators
+<!--
+Simulasi APBN
+
+Program ini ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+untuk Kementerian Keuangan Republik Indonesia.
+-->
+<!DOCTYPE html>
+<html lang="id" xml:lang="id" xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="author" content="Kementerian Keuangan Republik Indonesia, Danang Galuh Tegar Prasetyo (https://danang.id/)">
+    <meta name="description" content="Dasbor @Model.AppTitle">
+
+    <title>Dasbor @Model.AppTitle@(ViewBag.Title is not null ? ": " + ViewBag.Title : "" )</title>
+    <partial name="_PageIconPartial" />
+    
+    <partial name="_GoogleTagManagerScriptPartial" />
+    
+    <!-- Custom fonts -->
+    <link href="~/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <environment include="Development">
+        <link href="~/styles/layout.font.css" rel="stylesheet">
+    </environment>
+    <environment exclude="Development">
+        <link href="~/styles/layout.font.min.css" rel="stylesheet">
+    </environment>
+
+    <!-- Custom styles -->
+    <environment include="Development">
+        <link href="~/styles/layout.css" rel="stylesheet">
+    </environment>
+    <environment exclude="Development">
+        <link href="~/styles/layout.min.css" rel="stylesheet">
+    </environment>
+    
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body id="page-top">
+    <partial name="_NoScriptPartial" />
+
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+        <!-- Sidebar -->
+        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+
+            <partial name="Shared/_SideBarBrandPartial" />
+            @switch (Model.AccountRole)
+            {
+                case AccountRole.DeveloperSupport:
+                    <partial name="Shared/_SideBarAdministratorNavigationPartial" />
+                    break;
+                case AccountRole.Administrator:
+                    <partial name="Shared/_SideBarAdministratorNavigationPartial" />
+                    break;
+                case AccountRole.Analyst:
+                    <partial name="Shared/_SideBarAnalystNavigationPartial" />
+                    break;
+            }
+
+            <!-- Divider -->
+            <hr class="sidebar-divider d-none d-md-block" />
+
+            <!-- Sidebar Toggler (Sidebar) -->
+            <div class="text-center d-none d-md-inline">
+                <button class="rounded-circle border-0" id="sidebarToggle"></button>
+            </div>
+
+        </ul>
+        <!-- End of Sidebar -->
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column">
+
+            <!-- Main Content -->
+            <div id="content">
+
+                <!-- Top Bar -->
+                <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+
+                    <!-- Sidebar Toggle (Top Bar) -->
+                    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+                        <i class="fa fa-bars"></i>
+                    </button>
+
+                    <!-- Top Bar Navbar -->
+                    <ul class="navbar-nav ml-auto">
+
+                        <!-- Nav Item - User Information -->
+                        <li class="nav-item dropdown no-arrow">
+
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">@Model.Account.Name</span>
+                                <i class="fas fa-fw fa-user-circle fa-2x"></i>
+                            </a>
+
+                            @switch (Model.AccountRole)
+                            {
+                                case AccountRole.DeveloperSupport:
+                                    <partial name="Shared/_AccountAdministratorTopBarMenuPartial" />
+                                    break;
+                                case AccountRole.Administrator:
+                                    <partial name="Shared/_AccountAdministratorTopBarMenuPartial" />
+                                    break;
+                                case AccountRole.Analyst:
+                                    <partial name="Shared/_AccountAnalystTopBarMenuPartial" />
+                                    break;
+                            }
+
+                        </li>
+
+                    </ul>
+
+                </nav>
+                <!-- End of Topbar -->
+                <!-- Begin Page Content -->
+                <div class="container-fluid">
+
+                    @RenderBody()
+
+                    <div class="row">
+                        <div class="col-12 d-flex">
+                            <div class="ml-auto mb-5">
+                                @await RenderSectionAsync("CallToActions", false)
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- /.container-fluid -->
+
+            </div>
+            <!-- End of Main Content -->
+            <!-- Footer -->
+            <footer class="sticky-footer bg-white">
+                <div class="container my-auto">
+                    <partial name="Shared/_CopyrightPartial" />
+                </div>
+            </footer>
+            <!-- End of Footer -->
+
+        </div>
+        <!-- End of Content Wrapper -->
+
+        @await RenderSectionAsync("Modals", false)
+
+    </div>
+    <!-- End of Page Wrapper -->
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
+
+    <partial name="Shared/_AccountSignOutModalPartial" />
+
+    <partial name="_FigletScriptPartial" />
+
+    <partial name="_AxiosScriptPartial" />
+
+    <partial name="_VueScriptPartial" />
+
+    <partial name="_BootstrapJQueryScriptPartial" />
+
+    <partial name="_SweetAlertScriptPartial" />
+
+    <!-- Custom script for Layout -->
+    <environment include="Development">
+        <script src="~/scripts/layout.js"></script>
+    </environment>
+    <environment exclude="Development">
+        <script src="~/scripts/layout.min.js"></script>
+    </environment>
+
+    <!-- Page level custom scripts -->
+    @await RenderSectionAsync("Scripts", false)
+
+    <script lang="js">
+if(void 0===app)var app={data:{alerts:JSON.parse('@(Json.Serialize(Model.Alerts))'),sweetAlert:{text:'@(Model.SweetAlert.Text)',title:'@(Model.SweetAlert.Title)',icon:'@(Model.SweetAlert.Type)',button:"OK"}},methods:{onAlertClose(e){this.alerts.splice(e,1)},showAlert(e,t,l){this.sweetAlert.text=e,this.sweetAlert.title=t,this.sweetAlert.icon=l,showSweetAlert(this.sweetAlert),this.alert.push({text:e,title:t,type:l})}},mounted(){showSweetAlert(this.sweetAlert)}};app.el="#wrapper",app=new Vue(app);
+    </script>
+
+</body>
+
+</html>

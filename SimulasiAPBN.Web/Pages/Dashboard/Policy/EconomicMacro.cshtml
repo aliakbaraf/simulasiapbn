@@ -1,0 +1,448 @@
+@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+@page
+@using SimulasiAPBN.Core.Common
+@model EconomicMacro
+
+@{ Layout = "_Layout";
+    ViewBag.Title = "Asumsi Ekonomi Makro"; }
+
+<!-- Page Heading -->
+<div class="d-sm-flex mb-4">
+    <a class="btn btn-sm" asp-page="CountryIncome">
+        <i class="fas fa-fw fa-arrow-left"></i>&nbsp;
+    </a>&nbsp;
+    <h1 class="h3 mb-0 text-gray-800">Asumsi Ekonomi Makro</h1>
+    @if (Model.StateBudgets.Any())
+    {
+        <button class="btn btn-warning btn-sm ml-auto" v-on:click="onShowAddEconomicMacroModal">
+            <i class="fas fa-plus fa-fw"></i>&nbsp;Tambah Asumsi Ekonomi
+        </button>
+    }
+</div>
+
+<partial name="_AlertPartial" />
+
+<!-- Content Row -->
+<div class="row">
+@if (!Model.EconomicMacros.Any())
+{
+<div class="col-12">
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Daftar Asumsi Ekonomi Makro</h6>
+        </div>
+        <div class="card-body">
+            Belum ada Asumsi Ekonomi Makro yang dicatat.<br />
+            Silakan tambah untuk memulai.
+        </div>
+    </div>
+</div> 
+}
+else
+{
+<div class="col-12">
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-sm-flex align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">Daftar Asumsi Ekonomi Makro</h6>
+            <form method="get" class="form-inline">
+                <div class="form-group mx-sm-3 mb-2">
+                    <label for="stateBudgetId" class="sr-only">
+                        Kebijakan
+                    </label>
+                    <select class="custom-select custom-select-sm"
+                            name="StateBudgetId"
+                            id="stateBudgetId"
+                            v-model="activeStateBudgetId">
+                        @foreach (var stateBudget in Model.StateBudgets)
+                        {
+        <option value="@stateBudget.Id">
+            @Formatter.GetStateBudgetPolicyName(stateBudget)
+        </option>}
+                    </select>
+                </div>&nbsp;
+                <button class="btn btn-primary btn-sm mb-2" type="submit">
+                    Ganti
+                </button>
+            </form>
+        </div>
+        <div class="card-body">
+            <hr />
+            <div class="table-responsive">
+                <table class="table table-bordered" id="economicMacroTable">
+                    <thead class="text-center">
+                    <th>Nama</th>
+                    <th>Nilai Dasar</th>
+                    <th>Kenaikan</th>
+                    <th>Nilai Kenaikan</th>
+                    <th>Urutan</th>
+                    <th>Aksi</th>
+                    </thead>
+                    <tbody>
+                        @foreach (var economicMacro in Model.EconomicMacros)
+                        {
+                        <tr>
+                            <td>@economicMacro.Name (@economicMacro.UnitDesc)</td>
+                            <td class="text-center">@economicMacro.DefaultValue</td>
+                            <td class="text-center">@economicMacro.Threshold</td>
+                            <td class="text-center">@economicMacro.ThresholdValue</td>
+                            <td class="text-center">@economicMacro.OrderFlag</td>
+                            <td class="text-center">
+                                <a class="btn btn-outline-primary btn-sm"
+                                   asp-page="EconomicMacroDetail"
+                                   asp-route-EconomicMacroId="@economicMacro.Id">
+                                    Atur Detail
+                                </a>
+                                <button class="btn btn-outline-primary btn-sm"
+                                        v-on:click="e => onShowModifyEconomicMacroModal(e, '@economicMacro.Id')">
+                                    Ubah
+                                </button>&nbsp;
+                                <button class="btn btn-danger btn-sm"
+                                        v-on:click="e => onShowRemoveEconomicMacroModal(e, '@economicMacro.Id')">
+                                    Hapus
+                                </button>
+                            </td>
+                        </tr>
+}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+    }
+</div>
+
+@section Styles
+{
+    <partial name="_DataTableStylePartial" />
+}
+
+@section Scripts
+{
+    <partial name="_DataTableScriptPartial" />
+    <script lang="js">
+    var app = {
+        data: {
+            alerts: JSON.parse('@Json.Serialize(Model.Alerts)'),
+            sweetAlert: {
+                text: '@Model.SweetAlert.Text',
+                title: '@Model.SweetAlert.Title',
+                icon: '@Model.SweetAlert.Type',
+                button: "OK"
+            },
+            loadingState: false,
+            stateBudget: JSON.parse('@Json.Serialize(Model.StateBudget)'),
+            economicMacros: JSON.parse('@Json.Serialize(Model.EconomicMacros)'),
+            activeStateBudgetId: '@Model.StateBudget.Id',
+            activeEconomicMacro: {
+                id: "",
+                name: "",
+                unit_desc: "",
+                default_value: 0,
+                minimum_value: 0,
+                maximum_value: 0,
+                threshold: 0,
+                threshold_value: 0,
+                order_flag: 0,
+            },
+            postAction: '@EconomicMacro.AddEconomicMacroAction',
+        },
+        methods: {
+            toLocale(value) {
+                return window.toLocale(value);
+            },
+            toCurrency(value) {
+                return window.toCurrency(value);
+            },
+            onAlertClose(index) {
+                this.alerts.splice(index,  1);
+            },
+            showAlert(text, title, type) {
+                this.sweetAlert.text = text;
+                this.sweetAlert.title = title;
+                this.sweetAlert.icon = type;
+                showSweetAlert(this.sweetAlert);
+                this.alerts.push({ text, title, type });
+            },
+            setActiveEconomicMacro(economicMacroId) {
+                var emptyEconomicMacro = {
+                    id: "",
+                    name: "",
+                    unit_desc: "",
+                    default_value: 0,
+                    minimum_value: 0,
+                    maximum_value: 0,
+                    threshold: 0,
+                    threshold_value: 0,
+                    order_flag: 0,
+                };
+                if (!economicMacroId) {
+                    this.activeEconomicMacro = Object.assign({}, emptyEconomicMacro);
+                    return;
+                }
+                var economicMacro = this.economicMacros
+                    .find(economicMacro => economicMacro.id === economicMacroId);
+                if (!economicMacro) {
+                    this.activeEconomicMacro = Object.assign({}, emptyEconomicMacro);
+                    return;
+                }
+                this.activeEconomicMacro = Object.assign({}, economicMacro);
+            },
+            onShowAddEconomicMacroModal() {
+                this.postAction = '@EconomicMacro.AddEconomicMacroAction';
+                this.setActiveEconomicMacro();
+                $("#upsertEconomicMacroModal").modal("show");
+            },
+            /* Modify EconomicMacro handlers */
+            onShowModifyEconomicMacroModal(event, economicMacroId) {
+                event.preventDefault();
+                this.postAction = '@EconomicMacro.ModifyEconomicMacroAction';
+                this.setActiveEconomicMacro(economicMacroId);
+                $("#upsertEconomicMacroModal").modal("show");
+            },
+            onShowRemoveEconomicMacroModal(event, economicMacroId) {
+            	event.preventDefault();
+                this.postAction = '@EconomicMacro.RemoveEconomicMacroAction';
+                this.setActiveEconomicMacro(economicMacroId);
+                $("#removeEconomicMacroModal").modal("show");
+            },
+            /* Upsert EconomicMacro handlers */
+            onUpsertEconomicMacroButtonClicked(event) {
+                event.preventDefault();
+                document.getElementById("upsert-economic-macro-form").submit();
+            },
+            onRemoveEconomicMacroButtonClicked() {
+                this.loadingState = true;
+                document.getElementById("remove-economic-macro-form").submit();
+            },
+        },
+        mounted() {
+            showSweetAlert(this.sweetAlert);
+            @if (Model.EconomicMacros.Any())
+            {
+                @Html.Raw("$('#economicMacroTable').DataTable();")
+            }
+        },
+    };
+    </script>
+}
+
+@section Modals
+{
+
+    <!-- Upsert Economic Macro Modal -->
+    <div class="modal fade"
+         id="upsertEconomicMacroModal"
+         tabindex="-1"
+         role="dialog"
+         aria-labelledby="upsertEconomicMacroModal"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="upsertEconomicMacroModalLabel">
+                        {{
+                        postAction === '@EconomicMacro.AddEconomicMacroAction'
+                        ? "Asumsi Ekonomi Makro Baru"
+                        : "Ubah Asumsi Ekonomi Makro"
+                        }}
+                    </h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Tutup">
+                        <span aria-hidden="true">x</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="upsert-economic-macro-form" method="post">
+                        <input type="hidden" name="action" v-model="postAction" />
+                        <input type="hidden"
+                               name="id"
+                               v-if="postAction === '@EconomicMacro.ModifyEconomicMacroAction'"
+                               v-model="activeEconomicMacro.id" />
+                        <div class="form-group row">
+                            <label for="name" class="col-md-4 col-form-label">
+                                Nama
+                            </label>
+                            <div class="col-md-8">
+                                <input type="text"
+                                       class="form-control"
+                                       id="name"
+                                       name="name"
+                                       v-bind:value="activeEconomicMacro.name"
+                                       v-bind:readonly="loadingState"
+                                       placeholder="Nama Asumsi Ekonomi Makro" />
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="unit_desc" class="col-md-4 col-form-label">
+                                Satuan
+                            </label>
+                            <div class="col-md-8">
+                                <input type="text"
+                                       class="form-control"
+                                       id="unit_desc"
+                                       name="unitDesc"
+                                       v-bind:value="activeEconomicMacro.unit_desc"
+                                       v-bind:readonly="loadingState"
+                                       placeholder="Satuan Asumsi Ekonomi Makro" />
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="order_flag" class="col-md-4 col-form-label">
+                                Urutan
+                            </label>
+                            <div class="col-md-8">
+                                <input type="number"
+                                       step="1"
+                                       class="form-control"
+                                       id="order_flag"
+                                       name="orderFlag"
+                                       v-bind:readonly="loadingState"
+                                       v-bind:value="activeEconomicMacro.order_flag" />
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="maximum_value" class="col-md-4 col-form-label">
+                                Nilai Maksimum
+                            </label>
+                            <div class="col-md-8">
+                                <input type="number"
+                                       step="0.1"
+                                       class="form-control"
+                                       id="maximum_value"
+                                       name="maximumValue"
+                                       v-bind:readonly="loadingState"
+                                       v-bind:value="activeEconomicMacro.maximum_value" />
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="minimum_value" class="col-md-4 col-form-label">
+                                Nilai Minimum
+                            </label>
+                            <div class="col-md-8">
+                                <input type="number"
+                                       step="0.1"
+                                       class="form-control"
+                                       id="minimum_value"
+                                       name="minimumValue"
+                                       v-bind:readonly="loadingState"
+                                       v-bind:value="activeEconomicMacro.minimum_value" />
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="default_value" class="col-md-4 col-form-label">
+                                Nilai Dasar
+                            </label>
+                            <div class="col-md-8">
+                                <input type="number"
+                                       step="0.1"
+                                       class="form-control"
+                                       id="default_value"
+                                       name="defaultValue"
+                                       v-bind:readonly="loadingState"
+                                       v-bind:value="activeEconomicMacro.default_value" />
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="threshold" class="col-md-4 col-form-label">
+                                Kenaikan
+                            </label>
+                            <div class="col-md-8">
+                                <input type="number"
+                                       step="0.1"
+                                       class="form-control"
+                                       id="threshold"
+                                       name="threshold"
+                                       v-bind:readonly="loadingState"
+                                       v-bind:value="activeEconomicMacro.threshold" />
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="threshold_value" class="col-md-4 col-form-label">
+                                Nilai Kenaikan
+                            </label>
+                            <div class="col-md-8">
+                                <input type="number"
+                                       step="0.1"
+                                       class="form-control"
+                                       id="threshold_value"
+                                       name="thresholdValue"
+                                       v-bind:readonly="loadingState"
+                                       v-bind:value="activeEconomicMacro.threshold_value" />
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary"
+                            type="button"
+                            v-bind:disabled="loadingState"
+                            data-dismiss="modal">
+                        Batal
+                    </button>
+                    <button class="btn btn-warning"
+                            type="button"
+                            v-bind:disabled="loadingState"
+                            v-on:click="onUpsertEconomicMacroButtonClicked">
+                        <i class="fas fa-spinner fa-spin" v-if="loadingState"></i>
+                        <div v-else>
+                            <span v-if="postAction === '@EconomicMacro.AddEconomicMacroAction'">Tambah</span>
+                            <span v-else>Ubah</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remove State Expenditure Modal -->
+    <div class="modal fade"
+         id="removeEconomicMacroModal"
+         tabindex="-1" role="dialog"
+         aria-labelledby="removeEconomicMacroModal"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="removeEconomicMacroModalLabel">
+                        Hapus Asumsi dari APBN?
+                    </h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Tutup">
+                        <span aria-hidden="true">x</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="remove-economic-macro-form" method="post">
+                        <input type="hidden" name="action" v-model="postAction" />
+                        <input type="hidden" name="id" v-model="activeEconomicMacro.id" />
+                    </form>
+                    <p>
+                        Anda akan menghapus Ekonomi Makro berikut.<br />
+                        &nbsp;-&nbsp;{{ activeEconomicMacro.name }}
+                    </p>
+                    <p class="font-weight-bold">Lanjutkan?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary"
+                            type="button"
+                            v-bind:disabled="loadingState"
+                            data-dismiss="modal">
+                        Batal
+                    </button>
+                    <button class="btn btn-danger"
+                            type="button"
+                            v-bind:disabled="loadingState"
+                            v-on:click="onRemoveEconomicMacroButtonClicked">
+                        <i class="fas fa-spinner fa-spin" v-if="loadingState"></i>
+                        <span v-else>Hapus</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}

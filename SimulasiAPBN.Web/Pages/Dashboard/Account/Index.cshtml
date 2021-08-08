@@ -1,0 +1,246 @@
+@*
+    Simulasi APBN
+
+    Program ditulis oleh Danang Galuh Tegar Prasetyo (https://danang.id/)
+    untuk Kementerian Keuangan Republik Indonesia.
+*@
+@page
+@using SimulasiAPBN.Core.Enumerators
+@model Index
+
+@{
+    Layout = "_Layout";
+    ViewBag.Title = "Akun";
+}
+
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Akun</h1>
+</div>
+
+<partial name="_AlertPartial" />
+
+<!-- Content Row -->
+<div class="row">
+    <div class="col-12">
+        @if (Model.AccountRole != AccountRole.Administrator && Model.AccountRole != AccountRole.DeveloperSupport)
+        {
+            <div class="alert alert-warning fade show font-weight-light" role="alert">
+                <strong>Perhatian!</strong><br />
+                Silakan hubungi Pengelola untuk mengubah informasi akun pengguna Anda termasuk kata sandi.
+            </div>
+        }
+        <div class="card shadow mb-4">
+            <div class="card-body">
+                <form id="account-form" method="post">
+                    <div class="form-group row">
+                        <label for="name" class="col-md-3 col-form-label font-weight-bold">Nama Lengkap</label>
+                        <div class="col-md-9">
+                            <input type="text"
+                                   v-bind:readonly="!modifyState"
+                                   v-bind:class="modifyState ? ['form-control'] : ['form-control-plaintext']"
+                                   id="name"
+                                   name="name"
+                                   placeholder="Andi Wijaya"
+                                   v-model="name" />
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="email" class="col-md-3 col-form-label font-weight-bold">Alamat Email</label>
+                        <div class="col-md-9">
+                            <input type="text"
+                                   v-bind:readonly="!modifyState"
+                                   v-bind:class="modifyState ? ['form-control'] : ['form-control-plaintext']"
+                                   id="email"
+                                   name="email"
+                                   placeholder="seseorang@kemenkeu.go.id"
+                                   v-model="email" />
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="username" class="col-md-3 col-form-label font-weight-bold">Nama Pengguna</label>
+                        <div class="col-md-9">
+                            <input type="text"
+                                   v-bind:readonly="!modifyState"
+                                   v-bind:class="modifyState ? ['form-control'] : ['form-control-plaintext']"
+                                   id="username"
+                                   name="username"
+                                   placeholder="(digunakan untuk masuk Dasbor)"
+                                   v-model="username" />
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="role" class="col-md-3 col-form-label font-weight-bold">Peran Pengguna</label>
+                        <div class="col-md-9">
+                            <input type="text"
+                                   readonly
+                                   class="form-control-plaintext"
+                                   id="role"
+                                   v-model="role" />
+                        </div>
+                    </div>
+                </form>
+                <ul v-if="modifyState">
+                    <li><code>Nama Pengguna</code> akan digunakan untuk masuk Dasbor Simulasi APBN.</li>
+                    <li>
+                        <code>Nama Pengguna</code> hanya boleh terdiri dari huruf alfabet (<mark>a-z</mark>,
+                        baik kapital maupun non-kapital), angka (<mark>0-1</mark>), garis bawah (<mark>_</mark>),
+                        garis tengah (<mark>-</mark>), dan titik (<mark>.</mark>).
+                    </li>
+                    <li>
+                        Untuk mengubah <code>Kata Sandi</code>, silakan menuju laman
+                        <a asp-page="ChangePassword">Ubah Kata Sandi</a>.
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.AccountRole == AccountRole.Administrator || Model.AccountRole == AccountRole.DeveloperSupport)
+{
+    @section CallToActions
+    {
+        <button class="btn btn-warning"
+                v-if="modifyState && !loadingState"
+                v-bind:disabled="loadingState"
+                v-on:click="onCancelModifyButtonClicked">
+            <span>Batalkan</span>
+        </button>
+        &nbsp;
+        <button class="btn btn-primary"
+                v-if="modifyState"
+                v-bind:disabled="loadingState"
+                v-on:click="onSubmitButtonClicked">
+            <i class="fas fa-spinner fa-spin" v-if="loadingState"></i>
+            <span v-if="!loadingState">Ubah Data</span>
+        </button>
+        <button class="btn btn-primary"
+                v-if="!modifyState"
+                v-bind:disabled="loadingState"
+                v-on:click="onStartModifyButtonClicked">
+            <i class="fas fa-spinner fa-spin" v-if="loadingState"></i>
+            <span v-if="!loadingState">Ubah Data</span>
+        </button>
+    }
+}
+
+@section Scripts
+{
+    <script lang="js">
+    var emailRegex = /^(([^<>()\[\]\\.,;:\s@@"]+(\.[^<>()\[\]\\.,;:\s@@"]+)*)|(".+"))@@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+    var app = {
+       data: {
+            alerts: JSON.parse('@Json.Serialize(Model.Alerts)'),
+            sweetAlert: {
+                text: '@Model.SweetAlert.Text',
+                title: '@Model.SweetAlert.Title',
+                icon: '@Model.SweetAlert.Type',
+                button: "OK"
+            },
+            loadingState: false,
+            modifyState: false,
+            name: "@Model.Account.Name",
+            email: "@Model.Account.Email",
+            username: "@Model.Account.Username",
+            role: "@Model.AccountRoleText"
+        },
+        methods: {
+            onAlertClose(index) {
+                this.alerts.splice(index,  1);
+            },
+            onStartModifyButtonClicked(event) {
+                event.preventDefault();
+                this.modifyState = true;
+            },
+            onCancelModifyButtonClicked(event) {
+                event.preventDefault();
+                this.modifyState = false;
+                this.name = "@Model.Account.Name";
+                this.email = "@Model.Account.Email";
+                this.username = "@Model.Account.Username";
+            },
+            onSubmitButtonClicked(event) {
+                event.preventDefault();
+                /* Name Testing */
+                if (!/^.{1,}$/.test(this.name)) {
+                    this.showAlert(
+                        "Nama Lengkap tidak boleh kosong.",
+                        "Terjadi Kesalahan!",
+                        "danger"
+                        );
+                    return;
+                }
+                /* Email Testing */
+                if (!/^.{1,}$/.test(this.email)) {
+                    this.showAlert(
+                        "Alamat Email tidak boleh kosong.",
+                        "Terjadi Kesalahan!",
+                        "danger"
+                        );
+                    return;
+                }
+                if (!emailRegex.test(this.email)) {
+                    this.showAlert(
+                        "Alamat Email tidak valid.",
+                        "Terjadi Kesalahan!",
+                        "danger"
+                        );
+                    return;
+                }
+                /* Username Testing */
+                if (!/^.{1,}$/.test(this.username)) {
+                    this.showAlert(
+                        "Nama Pengguna tidak boleh kosong.",
+                        "Terjadi Kesalahan!",
+                        "danger"
+                        );
+                    return;
+                }
+                if (!/^[a-zA-Z0-9_\-.]+$/.test(this.username)) {
+                    this.showAlert(
+                        "Nama Pengguna mengandung karakter terlarang.",
+                        "Kesalahan",
+                        "danger"
+                        );
+                    return;
+                }
+                this.loadingState = true;
+                document.getElementById("account-form").submit();
+            },
+            showAlert(text, title, type) {
+                if (title === void 0) {
+                    title = "Informasi:";
+                }
+                if (type === void 0) {
+                    type = "info";
+                }
+                this.sweetAlert.text = text;
+                this.sweetAlert.title = title;
+                this.sweetAlert.icon = type;
+                if (type === "danger") {
+                    this.sweetAlert.icon = "error";
+                }
+                if (type === "primary") {
+                    this.sweetAlert.icon = "info";
+                }
+                if (typeof window.swal !== "undefined" && this.sweetAlert.text !== "") {
+                    swal(this.sweetAlert);
+                }
+                this.alerts.push({ text, title, type });
+            },
+        },
+        mounted() {
+            var inputs = document.getElementsByTagName("input");
+            for (var input of inputs) {
+                input.addEventListener("keyup", (event) => {
+                    if (event.keyCode === 13) {
+                        this.onSubmitButtonClicked(event);
+                    }
+                });
+            }
+            showSweetAlert(this.sweetAlert);
+        }
+    };
+    </script>
+}
